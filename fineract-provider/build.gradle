@@ -241,7 +241,7 @@ task setBlankPassword {
 bootRun {
     jvmArgs = [
         "-Dspring.output.ansi.enabled=ALWAYS"
-    ]
+    ] + rootProject.ext.jdk17RuntimeJvmArgs
 }
 
 springBoot {

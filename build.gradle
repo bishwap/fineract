@@ -362,6 +362,23 @@ allprojects  {
     }
 }
 
+// JDK 17 strong encapsulation: OpenJPA and the Gson/reflection-based (de)serializers still reach into
+// java.base internals at runtime (e.g. java.time fields), so the forked test and bootRun JVMs need these
+// --add-opens. Mirrors the org.gradle.jvmargs used for the build/enhance daemon in gradle.properties.
+ext.jdk17RuntimeJvmArgs = [
+    "--add-opens", "java.base/java.lang=ALL-UNNAMED",
+    "--add-opens", "java.base/java.lang.reflect=ALL-UNNAMED",
+    "--add-opens", "java.base/java.util=ALL-UNNAMED",
+    "--add-opens", "java.base/java.io=ALL-UNNAMED",
+    "--add-opens", "java.base/java.net=ALL-UNNAMED",
+    "--add-opens", "java.base/java.security=ALL-UNNAMED",
+    "--add-opens", "java.base/java.text=ALL-UNNAMED",
+    "--add-opens", "java.base/java.math=ALL-UNNAMED",
+    "--add-opens", "java.base/java.time=ALL-UNNAMED",
+    "--add-opens", "java.base/sun.nio.ch=ALL-UNNAMED",
+    "--add-opens", "java.sql/java.sql=ALL-UNNAMED",
+]
+
 configure(project.fineractJavaProjects) {
     // NOTE: order matters!
 
@@ -621,6 +638,7 @@ configure(project.fineractJavaProjects) {
 
     test {
         useJUnitPlatform()
+        jvmArgs rootProject.ext.jdk17RuntimeJvmArgs
         testLogging {
             // FINERACT-927
             events "skipped", "failed"
