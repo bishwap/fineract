@@ -105,6 +105,17 @@ allprojects  {
     }
 
     apply plugin: 'io.spring.dependency-management'
+
+    // Override versions managed by the Spring Boot BOM to pick up additional CVE fixes while
+    // staying on the same supported minor lines that Boot 2.7.18 is compatible with:
+    //  - Spring Framework 5.3.31 -> 5.3.39
+    //  - embedded Tomcat 9.0.83 -> 9.0.118 (latest 9.0.x / Servlet 4.0 line)
+    //  - SnakeYAML 1.30 -> 1.33, Logback 1.2.12 -> 1.2.13
+    ext['spring-framework.version'] = '5.3.39'
+    ext['tomcat.version'] = '9.0.118'
+    ext['snakeyaml.version'] = '1.33'
+    ext['logback.version'] = '1.2.13'
+
     apply plugin: 'com.diffplug.spotless'
     apply plugin: 'com.github.hierynomus.license'
     apply plugin: 'org.nosphere.apache.rat'
@@ -114,7 +125,6 @@ allprojects  {
     // https://github.com/spring-gradle-plugins/dependency-management-plugin
     dependencyManagement {
         imports {
-            mavenBom 'org.springframework:spring-framework-bom:5.3.39'
             mavenBom 'org.springframework.boot:spring-boot-dependencies:2.7.18'
             mavenBom 'org.junit:junit-bom:5.7.2'
         }
