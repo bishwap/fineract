@@ -76,10 +76,13 @@ dependencies {
             'io.swagger.core.v3:swagger-annotations',
             'org.webjars:webjars-locator-core',
 
-            'com.google.cloud.sql:mysql-socket-factory-connector-j-8:1.2.3',
             'com.squareup.retrofit2:converter-gson',
             'com.sun.activation:jakarta.activation:1.2.2'
             )
+    implementation ('com.google.cloud.sql:mysql-socket-factory-connector-j-8:1.28.4') {
+        // javax.annotation-api collides with the jakarta.annotation-api provided by Spring Boot.
+        exclude group: 'javax.annotation', module: 'javax.annotation-api'
+    }
     implementation ('jakarta.xml.bind:jakarta.xml.bind-api') {
         exclude group: 'jakarta.activation'
     }
