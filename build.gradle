@@ -21,7 +21,7 @@ buildscript {
     ext {
         jacocoVersion = '0.8.6'
         retrofitVersion = '2.9.0'
-        okhttpVersion = '4.9.0'
+        okhttpVersion = '4.12.0'
         oltuVersion = '1.0.1'
         fineractJavaProjects = subprojects.findAll{
             [
@@ -38,14 +38,24 @@ buildscript {
         }
     }
     repositories {
-        jcenter()
-        maven { url "https://plugins.gradle.org/m2/" }
+        mavenCentral()
+        gradlePluginPortal()
+    }
+
+    configurations.classpath {
+        resolutionStrategy.dependencySubstitution {
+            // okhttp-digest moved from com.burgstaller to io.github.rburgst; the old
+            // 1.10 coordinates only ever existed on the now-defunct jcenter.
+            substitute module('com.burgstaller:okhttp-digest:1.10') using module('io.github.rburgst:okhttp-digest:1.21')
+            // grgit-core 4.1.0 was only published to jcenter; 4.1.1 is the same line on Maven Central.
+            substitute module('org.ajoberstar.grgit:grgit-core:4.1.0') using module('org.ajoberstar.grgit:grgit-core:4.1.1')
+        }
     }
 
     dependencies {
         classpath 'com.bmuschko:gradle-cargo-plugin:2.8.0'
         classpath 'org.apache.openjpa:openjpa:3.2.0' // when upgrading, also change OpenJPA version repeated in fineract-provider/build.gradle!
-        classpath 'com.radcortez.gradle:openjpa-gradle-plugin:3.1.0'
+        classpath 'com.radcortez.gradle:openjpa-gradle-plugin:3.2.0'
         classpath 'gradle.plugin.com.github.spotbugs.snom:spotbugs-gradle-plugin:4.7.1'
         classpath 'gradle.plugin.com.github.andygoossens:gradle-modernizer-plugin:1.3.0'
     }
@@ -82,7 +92,16 @@ allprojects  {
     group = 'org.apache.fineract'
 
     repositories {
-        jcenter()
+        mavenCentral()
+        gradlePluginPortal()
+    }
+
+    // Gradle 6.9 predates the TargetJvmEnvironment attribute, so it cannot disambiguate
+    // Guava 32+'s android/jre Gradle Module Metadata variants. Pin the standard JVM variant.
+    configurations.all {
+        attributes {
+            attribute(Attribute.of('org.gradle.jvm.environment', String), 'standard-jvm')
+        }
     }
 
     apply plugin: 'io.spring.dependency-management'
@@ -107,8 +126,8 @@ allprojects  {
 
             dependency 'org.springframework.security.oauth:spring-security-oauth2:2.5.1.RELEASE'
             dependency 'org.apache.openjpa:openjpa:3.2.0' // when upgrading, also change OpenJPA version repeated above in buildscript!
-            dependency 'com.google.guava:guava:30.1.1-jre'
-            dependency 'com.google.code.gson:gson:2.8.6'
+            dependency 'com.google.guava:guava:32.1.3-jre'
+            dependency 'com.google.code.gson:gson:2.8.9'
             dependency 'com.google.truth:truth:1.1.2'
             dependency 'com.google.truth.extensions:truth-java8-extension:1.1.2'
             dependency 'org.apache.commons:commons-email:1.5'
@@ -120,8 +139,8 @@ allprojects  {
             dependency 'com.amazonaws:aws-java-sdk-s3:1.11.1011'
             dependency 'org.ehcache:ehcache:3.9.3'
             dependency 'com.github.spullara.mustache.java:compiler:0.9.7'
-            dependency 'com.jayway.jsonpath:json-path:2.5.0'
-            dependency 'org.apache.tika:tika-core:1.26'
+            dependency 'com.jayway.jsonpath:json-path:2.9.0'
+            dependency 'org.apache.tika:tika-core:1.28.5'
             dependency 'org.apache.httpcomponents:httpclient:4.5.13'
             dependency 'io.swagger.core.v3:swagger-annotations:2.1.8'
             dependency 'jakarta.management.j2ee:jakarta.management.j2ee-api:1.1.4'
@@ -129,7 +148,7 @@ allprojects  {
             dependency 'jakarta.xml.bind:jakarta.xml.bind-api:2.3.3'
             dependency 'org.glassfish.jaxb:jaxb-runtime:2.3.4'
             dependency 'jakarta.validation:jakarta.validation-api:3.0.0'
-            dependency 'org.apache.activemq:activemq-broker:5.16.2'
+            dependency 'org.apache.activemq:activemq-broker:5.16.7'
             dependency 'org.apache.bval:org.apache.bval.bundle:2.0.5'
 
             dependency 'io.github.classgraph:classgraph:4.8.105'
