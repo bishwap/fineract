@@ -245,7 +245,7 @@ bootRun {
 }
 
 springBoot {
-    mainClassName = 'org.apache.fineract.ServerApplication'
+    mainClass = 'org.apache.fineract.ServerApplication'
 }
 
 bootJar {
