@@ -18,7 +18,7 @@
  */
 package org.apache.fineract.infrastructure.jobs.service;
 
-import java.util.Random;
+import java.util.concurrent.ThreadLocalRandom;
 import org.apache.fineract.infrastructure.core.domain.FineractPlatformTenant;
 import org.apache.fineract.infrastructure.core.service.ThreadLocalContextUtil;
 import org.apache.fineract.infrastructure.security.service.TenantDetailsService;
@@ -81,8 +81,7 @@ public class SchedulerTriggerListener implements TriggerListener {
                 LOG.warn("vetoJobExecution() not able to acquire the lock to update job running status at retry {} (of {}) for JobKey: {}",
                         numberOfRetries, maxNumberOfRetries, jobKey, exception);
                 try {
-                    Random random = new Random();
-                    int randomNum = random.nextInt(maxIntervalBetweenRetries + 1);
+                    int randomNum = ThreadLocalRandom.current().nextInt(maxIntervalBetweenRetries + 1);
                     Thread.sleep(1000 + (randomNum * 1000));
                     numberOfRetries = numberOfRetries + 1;
                 } catch (InterruptedException e) {

@@ -245,7 +245,7 @@ bootRun {
 }
 
 springBoot {
-    mainClassName = 'org.apache.fineract.ServerApplication'
+    mainClass = 'org.apache.fineract.ServerApplication'
 }
 
 bootJar {
@@ -266,7 +266,7 @@ tasks.withType(Tar) {
 
 distributions {
     binary {
-        baseName "apache-fineract-$releaseVersion-binary"
+        distributionBaseName = "apache-fineract-$releaseVersion-binary"
         contents {
             from bootJar
             from war
@@ -284,7 +284,7 @@ distributions {
         }
     }
     src {
-        baseName "apache-fineract-$releaseVersion-src"
+        distributionBaseName = "apache-fineract-$releaseVersion-src"
         contents {
             from "$rootDir/"
             exclude '**/build' , '.git', '.gradle', '.github', '.settings', '.project', '.classpath', '.idea', 'out', '._.DS_Store', '.DS_Store', 'WebContent', '.externalToolbuilders', '.theia', '.gitpod.yml', '.travis.yml', 'LICENSE_RELEASE', 'NOTICE_RELEASE', '**/licenses/binary'
@@ -333,7 +333,7 @@ if( project.hasProperty("fineract.release") ) {
 // Configuration for git properties gradle plugin
 // https://github.com/n0mer/gradle-git-properties
 gitProperties {
-    gitPropertiesResourceDir = "$buildDir/classes/java/main/resources"
+    gitPropertiesResourceDir.set(file("$buildDir/classes/java/main/resources"))
     dateFormat = "yyyy-MM-dd'T'HH:mmZ"
     dateFormatTimeZone = "GMT"
     failOnNoGitDirectory = false

@@ -42,7 +42,7 @@ public class ResponseCorsFilter implements ContainerResponseFilter {
 
         final String reqHead = request.getHeaderValue("Access-Control-Request-Headers");
 
-        if (null != reqHead && !reqHead.equals(null)) {
+        if (null != reqHead) {
             resp.header("Access-Control-Allow-Headers", reqHead);
         }
 
