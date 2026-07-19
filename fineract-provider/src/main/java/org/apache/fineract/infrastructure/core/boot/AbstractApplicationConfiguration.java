@@ -26,11 +26,11 @@ import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceTransactionManagerAutoConfiguration;
 import org.springframework.boot.autoconfigure.jdbc.JdbcTemplateAutoConfiguration;
 import org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration;
+import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.ImportResource;
 import org.springframework.context.annotation.PropertySource;
-import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 /**
@@ -50,8 +50,7 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 @PropertySource(value = "classpath:META-INF/spring/jdbc.properties")
 @EnableAutoConfiguration(exclude = { DataSourceAutoConfiguration.class, HibernateJpaAutoConfiguration.class,
         DataSourceTransactionManagerAutoConfiguration.class, FlywayAutoConfiguration.class, GsonAutoConfiguration.class,
-        JdbcTemplateAutoConfiguration.class })
-@EnableWebSecurity
+        JdbcTemplateAutoConfiguration.class, SecurityAutoConfiguration.class })
 @EnableTransactionManagement
 public abstract class AbstractApplicationConfiguration {
 
