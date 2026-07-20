@@ -41,4 +41,19 @@ COPY --from=builder /fineract/libs /app/libs
 
 WORKDIR /app
 
-ENTRYPOINT ["java", "-Dloader.path=/app/libs/", "-jar", "/app/fineract-provider.jar"]
+# Java 17+ strong encapsulation: OpenJPA/Gson reflect into java.base internals at runtime (e.g.
+# java.time fields), so the shipped jar needs the same --add-opens set as bootRun/test
+# (build.gradle ext.jdkRuntimeJvmArgs). Without these the container 500s on date/time serialization.
+ENTRYPOINT ["java", \
+  "--add-opens", "java.base/java.lang=ALL-UNNAMED", \
+  "--add-opens", "java.base/java.lang.reflect=ALL-UNNAMED", \
+  "--add-opens", "java.base/java.util=ALL-UNNAMED", \
+  "--add-opens", "java.base/java.io=ALL-UNNAMED", \
+  "--add-opens", "java.base/java.net=ALL-UNNAMED", \
+  "--add-opens", "java.base/java.security=ALL-UNNAMED", \
+  "--add-opens", "java.base/java.text=ALL-UNNAMED", \
+  "--add-opens", "java.base/java.math=ALL-UNNAMED", \
+  "--add-opens", "java.base/java.time=ALL-UNNAMED", \
+  "--add-opens", "java.base/sun.nio.ch=ALL-UNNAMED", \
+  "--add-opens", "java.sql/java.sql=ALL-UNNAMED", \
+  "-Dloader.path=/app/libs/", "-jar", "/app/fineract-provider.jar"]
