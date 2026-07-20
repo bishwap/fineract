@@ -16,6 +16,18 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
+// Exclude legacy JAXB/activation artifacts pulled in transitively (e.g. jaxb-impl via
+// com.sun.jersey:jersey-json). They duplicate classes already provided by the modern
+// artifacts Fineract declares (org.glassfish.jaxb:jaxb-runtime, jakarta.xml.bind:jakarta.xml.bind-api,
+// com.sun.activation:jakarta.activation), which otherwise trips ClasspathHellDuplicatesCheckRuleTest.
+configurations.all {
+    exclude group: 'com.sun.xml.bind', module: 'jaxb-impl'
+    exclude group: 'javax.xml.bind', module: 'jaxb-api'
+    exclude group: 'javax.activation', module: 'activation'
+    exclude group: 'javax.activation', module: 'javax.activation-api'
+}
+
 dependencies {
     providedRuntime("org.springframework.boot:spring-boot-starter-tomcat")
 
