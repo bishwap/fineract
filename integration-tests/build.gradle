@@ -52,6 +52,10 @@ cargo {
             property 'cargo.tomcat.connector.clientAuth', false
             property 'cargo.protocol', 'https'
             property 'cargo.servlet.port', 8443
+            // The deployed WAR runs OpenJPA/Gson reflection into java.base internals (e.g. java.time)
+            // at runtime; the Cargo-managed Tomcat starts its own JVM, so it needs the same runtime
+            // --add-opens set as bootRun/test/the Docker ENTRYPOINT or it 500s on date/time serialization.
+            property 'cargo.start.jvmargs', rootProject.ext.jdkRuntimeJvmArgs.join(' ')
         }
     }
 }
