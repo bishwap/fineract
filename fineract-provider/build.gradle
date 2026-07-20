@@ -265,12 +265,21 @@ springBoot {
     mainClass = 'org.apache.fineract.ServerApplication'
 }
 
-// Package the generated OpenAPI spec into the runtime archives under static/swagger-ui (where the
-// bundled swagger-ui index.html loads it from). dependsOn makes the ordering explicit for Gradle 8.
-tasks.matching { it.name in ['jar', 'war', 'bootJar'] }.configureEach {
+// Package the generated OpenAPI spec so it lands on the runtime classpath at
+// /static/swagger-ui/fineract.yaml (where WebFrontEndConfiguration's resource handler and the bundled
+// swagger-ui index.html load it from). The classpath root differs per archive type: the plain jar's
+// root IS the classpath root, but Spring Boot's bootJar relocates classpath entries under
+// BOOT-INF/classes and the war under WEB-INF/classes -- so `into` must target the right prefix or
+// fineract.yaml 404s in the shipped artifact. dependsOn makes the ordering explicit for Gradle 8.
+def swaggerSpecClasspathDir = [
+    jar    : 'static/swagger-ui',
+    war    : 'WEB-INF/classes/static/swagger-ui',
+    bootJar: 'BOOT-INF/classes/static/swagger-ui',
+]
+tasks.matching { it.name in swaggerSpecClasspathDir.keySet() }.configureEach { archiveTask ->
     dependsOn resolve
     from(resolve.outputDir) {
-        into 'static/swagger-ui'
+        into swaggerSpecClasspathDir[archiveTask.name]
     }
 }
 
