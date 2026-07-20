@@ -243,7 +243,19 @@ task setBlankPassword {
     }
 }
 
+// Stage the generated OpenAPI spec under a directory whose layout matches how it is served
+// (classpath:/static/swagger-ui/) so it can be added to the `bootRun` runtime classpath. Since the
+// spec is generated outside the main source set output, without this `bootRun` serves the bundled
+// swagger-ui index.html but fineract.yaml 404s in local dev.
+tasks.register('stageSwaggerSpec', Copy) {
+    dependsOn resolve
+    from resolve.outputDir
+    into layout.buildDirectory.dir('generated/swagger-ui-classpath/static/swagger-ui')
+}
+
 bootRun {
+    dependsOn 'stageSwaggerSpec'
+    classpath += files(layout.buildDirectory.dir('generated/swagger-ui-classpath'))
     jvmArgs = [
         "-Dspring.output.ansi.enabled=ALWAYS"
     ] + rootProject.ext.jdkRuntimeJvmArgs
