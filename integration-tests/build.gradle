@@ -60,6 +60,13 @@ cargoRunLocal.dependsOn ':fineract-provider:war'
 cargoStartLocal.dependsOn ':fineract-provider:war'
 cargoStartLocal.mustRunAfter 'testClasses'
 
+// The test classpath consumes the compiled classes/resources of the provider and client modules
+// (via project(...) runtimeElements and a raw files(...) entry). Gradle 8 fails the build unless the
+// dependency on the producing tasks is explicit.
+tasks.named('compileTestJava') {
+    dependsOn ':fineract-provider:classes', ':fineract-client:classes'
+}
+
 test {
     dependsOn cargoStartLocal
     finalizedBy cargoStopLocal

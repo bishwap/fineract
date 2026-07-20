@@ -91,7 +91,7 @@ At a higher level though we see the capabilities fall into the following categor
 
 === Technology
 
-* Java 11: http://www.oracle.com/technetwork/java/javase/downloads/index.html
+* Java 21: http://www.oracle.com/technetwork/java/javase/downloads/index.html
 * JAX-RS 1.0: using Jersey (1.17.x)
 * JSON using Google GSON
 * Spring I/O Platform: http://spring.io/platform

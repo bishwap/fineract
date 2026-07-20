@@ -55,9 +55,9 @@ task buildJavaSdk(type: org.openapitools.generator.gradle.plugin.tasks.GenerateT
     generateModelTests = false
     generateApiTests = false
     ignoreFileOverride = "$projectDir/.openapi-generator-ignore"
-    // trick to make sure fineract.yaml is generated first
+    // depend on the provider's 'resolve' task, which produces fineract.yaml (the input spec)
     dependsOn = [
-        ':fineract-provider:compileJava'
+        ':fineract-provider:resolve'
     ]
     finalizedBy = [licenseFormat]
 }
@@ -77,6 +77,10 @@ task buildTypescriptAngularSdk(type: org.openapitools.generator.gradle.plugin.ta
         configurationPrefix: 'fineract',
         ngVersion: '10.0.0',
         npmName: 'apache-fineract-client'
+    ]
+    // depend on the provider's 'resolve' task (same as buildJavaSdk) so the input spec exists.
+    dependsOn = [
+        ':fineract-provider:resolve'
     ]
     finalizedBy = [licenseFormat]
 }
@@ -112,8 +116,10 @@ tasks.withType(JavaCompile) {
 }
 
 configurations {
-    generatedCompile.extendsFrom implementation
-    generatedRuntime.extendsFrom runtime
+    // Gradle 7 removed the legacy 'compile'/'runtime' configurations; wire the generated
+    // source set's classpath to the modern 'implementation'/'runtimeOnly' ones instead.
+    generatedImplementation.extendsFrom implementation
+    generatedRuntimeOnly.extendsFrom runtimeOnly
 }
 
 test {
