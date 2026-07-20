@@ -1,0 +1,104 @@
+NAME                                INSTALLED       FIXED IN       TYPE          VULNERABILITY        SEVERITY  EPSS          RISK          
+spring-boot-starter-web             2.3.12.RELEASE  2.5.12         java-archive  GHSA-36p3-wjmg-h94x  Critical  99.7% (99th)  98.7   (kev)  
+commons-text                        1.9             1.10.0         java-archive  GHSA-599f-7c49-w659  Critical  99.9% (99th)  93.9          
+activemq-broker                     5.16.7          5.19.5         java-archive  GHSA-rxpj-7qvf-xv32  High      96.7% (99th)  85.6   (kev)  
+snakeyaml                           1.33            2.0            java-archive  GHSA-mjmj-j48q-9wg2  High      99.6% (99th)  78.7          
+tika-core                           1.28.5          3.2.2          java-archive  GHSA-f58c-gq56-vjjf  Critical  79.8% (99th)  75.8          
+spring-webmvc                       5.2.25.RELEASE                 java-archive  GHSA-g5vr-rgqm-vf78  High      54.9% (98th)  41.1          
+spring-web                          5.2.25.RELEASE  6.0.0          java-archive  GHSA-4wrc-f8pq-fpqp  Critical  32.3% (98th)  30.3          
+spring-security-core                5.3.9.RELEASE   5.4.11         java-archive  GHSA-hh32-7344-cg2f  Critical  10.7% (95th)  10.0          
+spring-security-web                 5.3.9.RELEASE   5.4.11         java-archive  GHSA-hh32-7344-cg2f  Critical  10.7% (95th)  10.0          
+commons-compress                    1.19            1.21           java-archive  GHSA-mc84-pj99-q6hh  High      12.9% (95th)  9.7           
+commons-compress                    1.19            1.21           java-archive  GHSA-crv7-7245-f45f  High      12.4% (95th)  9.3           
+commons-compress                    1.19            1.21           java-archive  GHSA-7hfm-57qf-j43q  High      11.6% (95th)  8.7           
+commons-compress                    1.19            1.21           java-archive  GHSA-xqfj-vm6h-2x34  High      10.6% (95th)  8.0           
+commons-io                          2.6             2.7            java-archive  GHSA-gwrp-pvrq-jmwv  Medium    10.6% (95th)  5.2           
+activemq-client                     5.16.7          5.16.8         java-archive  GHSA-whxr-3p84-rf3c  Medium    8.5% (94th)   5.2           
+activemq-openwire-legacy            5.16.7          5.16.8         java-archive  GHSA-whxr-3p84-rf3c  Medium    8.5% (94th)   5.2           
+netty-codec                         4.1.65.Final    4.1.68.Final   java-archive  GHSA-9vjp-v76f-g363  High      6.3% (92nd)   4.7           
+spring-security-core                5.3.9.RELEASE   5.3.10         java-archive  GHSA-w9jg-gvgr-354m  High      6.0% (92nd)   4.5           
+netty-codec                         4.1.65.Final    4.1.68.Final   java-archive  GHSA-grg4-wf29-r9vv  High      5.7% (92nd)   4.2           
+activemq-broker                     5.16.7          5.19.6         java-archive  GHSA-w3w2-mpp5-92gm  High      4.8% (90th)   3.9           
+spring-web                          5.2.25.RELEASE                 java-archive  GHSA-ccgv-vj62-xf9h  High      4.0% (89th)   3.1           
+spring-web                          5.2.25.RELEASE  5.3.33         java-archive  GHSA-hgjh-9rj2-g67j  High      2.6% (83rd)   2.0           
+spring-security-web                 5.3.9.RELEASE   5.7.13         java-archive  GHSA-c4q5-6c82-3qpw  Critical  1.7% (75th)   1.6           
+netty-codec-http                    4.1.65.Final    4.1.71.Final   java-archive  GHSA-wx5j-54mm-rqqq  Medium    2.7% (84th)   1.5           
+netty-handler                       4.1.65.Final    4.1.94.Final   java-archive  GHSA-6mjq-h674-j845  Medium    2.5% (82nd)   1.4           
+commons-lang3                       3.10            3.18.0         java-archive  GHSA-j288-q9x7-2f5v  Medium    2.2% (80th)   1.2           
+spring-security-core                5.3.9.RELEASE   5.5.7          java-archive  GHSA-wx54-3278-m5g4  Medium    2.3% (81st)   1.2           
+jakarta.el                          3.0.3           3.0.4          java-archive  GHSA-v6w3-2prq-h95f  Medium    2.1% (79th)   1.1           
+spring-boot-actuator-autoconfigure  2.3.12.RELEASE  2.5.15         java-archive  GHSA-g5h3-w546-pj7f  Critical  1.1% (62nd)   1.1           
+jettison                            1.1             1.5.2          java-archive  GHSA-7rf3-mqpx-h7xg  High      1.4% (69th)   1.0           
+jettison                            1.1             1.5.2          java-archive  GHSA-grr4-wv38-f68w  High      1.4% (69th)   1.0           
+jettison                            1.1             1.5.2          java-archive  GHSA-x27m-9w8j-5vcw  High      1.3% (67th)   1.0           
+commons-io                          2.6             2.14.0         java-archive  GHSA-78wr-2p64-hpwj  High      1.2% (65th)   1.0           
+spring-web                          5.2.25.RELEASE  5.3.34         java-archive  GHSA-2wrp-6fg6-hmc5  High      1.2% (64th)   0.9           
+json-smart                          2.3.1           2.4.9          java-archive  GHSA-493p-pfq6-5258  High      1.1% (62nd)   0.8           
+activemq-broker                     5.16.7          5.19.6         java-archive  GHSA-mr6m-xj7v-3cv3  High      1.0% (58th)   0.8           
+jettison                            1.1             1.5.1          java-archive  GHSA-56h3-78gp-v83r  Medium    1.3% (68th)   0.8           
+jettison                            1.1             1.5.4          java-archive  GHSA-q6g2-g7f3-rr83  High      1.0% (59th)   0.8           
+spring-security-core                5.3.9.RELEASE   5.7.12         java-archive  GHSA-f3jh-qvm4-mg39  High      0.9% (57th)   0.7           
+poi-ooxml                           4.1.2           5.4.0          java-archive  GHSA-gmg8-593g-7mv3  Medium    1.3% (66th)   0.7           
+netty-codec-http                    4.1.65.Final    4.1.108.Final  java-archive  GHSA-5jpm-x58v-624v  Medium    1.4% (69th)   0.7           
+spring-boot-autoconfigure           2.3.12.RELEASE  2.5.15         java-archive  GHSA-xf96-w227-r7c4  High      0.9% (55th)   0.7           
+activemq-broker                     5.16.7          5.19.4         java-archive  GHSA-5568-6qcg-g7fx  High      0.9% (55th)   0.7           
+activemq-client                     5.16.7          5.19.4         java-archive  GHSA-5568-6qcg-g7fx  High      0.9% (55th)   0.7           
+mchange-commons-java                0.2.15          0.4.0          java-archive  GHSA-m2cm-222f-qw44  High      0.8% (52nd)   0.7           
+netty-codec-http                    4.1.65.Final    4.1.133.Final  java-archive  GHSA-f6hv-jmp6-3vwv  High      0.9% (55th)   0.7           
+spring-boot-actuator                2.3.12.RELEASE  2.7.18         java-archive  GHSA-jjfh-589g-3hjx  Medium    1.2% (65th)   0.6           
+netty-codec-http                    4.1.65.Final    4.1.133.Final  java-archive  GHSA-57rv-r2g8-2cj3  High      0.8% (50th)   0.6           
+groovy                              3.0.6           3.0.7          java-archive  GHSA-rcjj-h6gh-jf3r  Medium    1.1% (60th)   0.6           
+netty-codec-http                    4.1.65.Final    4.1.77.Final   java-archive  GHSA-269q-hmxg-m83q  Medium    1.0% (60th)   0.5           
+jackson-databind                    2.13.5          2.18.8         java-archive  GHSA-rmj7-2vxq-3g9f  High      0.7% (48th)   0.5           
+jackson-core                        2.13.5          2.15.0         java-archive  GHSA-h46c-h94j-95f3  High      0.6% (46th)   0.5           
+jackson-databind                    2.13.5          2.18.8         java-archive  GHSA-j3rv-43j4-c7qm  High      0.6% (45th)   0.5           
+netty-codec-http                    4.1.65.Final    4.1.132.Final  java-archive  GHSA-pwqr-wmgm-9rr8  High      0.6% (46th)   0.5           
+activemq-broker                     5.16.7          5.19.7         java-archive  GHSA-v853-w46p-fv2h  High      0.6% (43rd)   0.5           
+netty-handler                       4.1.65.Final    4.1.135.Final  java-archive  GHSA-3qp7-7mw8-wx86  High      0.6% (43rd)   0.4           
+spring-web                          5.2.25.RELEASE  5.3.38         java-archive  GHSA-2rmj-mq67-h97g  Medium    0.9% (54th)   0.4           
+spring-security-web                 5.3.9.RELEASE                  java-archive  GHSA-mf92-479x-3373  Critical  0.5% (38th)   0.4           
+activemq-broker                     5.16.7          5.19.7         java-archive  GHSA-hg6c-8mvr-jqc9  High      0.5% (42nd)   0.4           
+assertj-core                        3.16.1          3.27.7         java-archive  GHSA-rqfh-9r24-8c9r  High      0.5% (41st)   0.4           
+jackson-databind                    2.13.5          2.14.0         java-archive  GHSA-3wrr-7qpf-2prh  Medium    0.6% (45th)   0.3           
+netty-handler                       4.1.65.Final    4.1.135.Final  java-archive  GHSA-x4gw-5cx5-pgmh  High      0.5% (37th)   0.3           
+netty-codec                         4.1.65.Final    4.1.125.Final  java-archive  GHSA-3p8m-j85q-pgmj  Medium    0.6% (42nd)   0.3           
+netty-codec-http                    4.1.65.Final    4.1.133.Final  java-archive  GHSA-xxqh-mfjm-7mv9  Medium    0.6% (45th)   0.3           
+classgraph                          4.8.105         4.8.112        java-archive  GHSA-v2xm-76pq-phcf  Medium    0.6% (42nd)   0.3           
+spring-context                      5.2.25.RELEASE                 java-archive  GHSA-4gc7-5j7h-4qph  Medium    0.6% (46th)   0.3           
+spring-web                          5.2.25.RELEASE                 java-archive  GHSA-4gc7-5j7h-4qph  Medium    0.6% (46th)   0.3           
+activemq-broker                     5.16.7          5.19.6         java-archive  GHSA-2jp3-2923-9h52  Medium    0.6% (42nd)   0.3           
+netty-codec                         4.1.65.Final    4.1.133.Final  java-archive  GHSA-mj4r-2hfc-f8p6  High      0.4% (34th)   0.3           
+spring-boot-starter-actuator        2.3.12.RELEASE                 java-archive  GHSA-mgvc-8q2h-5pgc  High      0.4% (28th)   0.3           
+netty-handler-proxy                 4.1.65.Final    4.1.133.Final  java-archive  GHSA-45q3-82m4-75jr  Low       1.0% (57th)   0.3           
+spring-boot                         2.3.12.RELEASE                 java-archive  GHSA-rc42-6c7j-7h5r  High      0.4% (28th)   0.3           
+spring-expression                   5.2.25.RELEASE  5.3.39         java-archive  GHSA-9cmq-m9j5-mvww  Medium    0.5% (41st)   0.3           
+commons-compress                    1.19            1.26.0         java-archive  GHSA-4g9r-vxhx-9pgx  Medium    0.4% (35th)   0.2           
+logback-core                        1.2.13          1.3.15         java-archive  GHSA-pr98-23f8-jwxv  Medium    0.4% (32nd)   0.2           
+netty-common                        4.1.65.Final    4.1.115.Final  java-archive  GHSA-xq3w-v528-46rv  Medium    0.4% (33rd)   0.2           
+google-oauth-client                 1.31.5          1.33.3         java-archive  GHSA-hw42-3568-wj87  High      0.3% (20th)   0.2           
+netty-codec-http                    4.1.65.Final    4.1.133.Final  java-archive  GHSA-m4cv-j2px-7723  Medium    0.4% (28th)   0.2           
+spring-security-core                5.3.9.RELEASE   5.7.14         java-archive  GHSA-q3v6-hm2v-pw99  Medium    0.4% (30th)   0.2           
+netty-handler                       4.1.65.Final    4.1.135.Final  java-archive  GHSA-c653-97m9-rcg9  High      0.3% (18th)   0.2           
+netty-common                        4.1.65.Final    4.1.118.Final  java-archive  GHSA-389x-839f-4rhx  Medium    0.4% (30th)   0.2           
+activemq-broker                     5.16.7          5.19.3         java-archive  GHSA-h2h4-5m64-m273  Medium    0.4% (33rd)   0.2           
+activemq-client                     5.16.7          5.19.3         java-archive  GHSA-h2h4-5m64-m273  Medium    0.4% (33rd)   0.2           
+netty-codec-http                    4.1.65.Final    4.1.125.Final  java-archive  GHSA-fghv-69vj-qj49  Low       0.6% (46th)   0.2           
+activemq-broker                     5.16.7          5.19.7         java-archive  GHSA-hf52-78x8-6w3w  Medium    0.3% (24th)   0.2           
+jackson-databind                    2.13.5          2.18.9         java-archive  GHSA-5jmj-h7xm-6q6v  Medium    0.3% (26th)   0.2           
+spring-webmvc                       5.2.25.RELEASE                 java-archive  GHSA-6p4f-wcwh-5vvm  Medium    0.3% (26th)   0.2           
+netty-codec-http                    4.1.65.Final    4.1.129.Final  java-archive  GHSA-84h7-rjj3-6jx4  Medium    0.3% (21st)   0.2           
+netty-codec-http                    4.1.65.Final    4.1.133.Final  java-archive  GHSA-v8h7-rr48-vmmv  Medium    0.3% (22nd)   0.2           
+netty-codec-http                    4.1.65.Final    4.1.133.Final  java-archive  GHSA-38f8-5428-x5cv  Medium    0.2% (16th)   0.1           
+netty-codec-http                    4.1.65.Final    4.1.135.Final  java-archive  GHSA-hvcg-qmg6-jm4c  Medium    0.2% (14th)   0.1           
+jackson-databind                    2.13.5          2.18.8         java-archive  GHSA-hgj6-7826-r7m5  Medium    0.2% (12th)   0.1           
+spring-context                      5.2.25.RELEASE                 java-archive  GHSA-4wp7-92pw-q264  Low       0.4% (27th)   0.1           
+logback-core                        1.2.13          1.5.34         java-archive  GHSA-jhq6-gfmj-v8fx  Low       0.3% (26th)   0.1           
+logback-core                        1.2.13          1.3.16         java-archive  GHSA-25qh-j22f-pwp8  Medium    0.2% (7th)    < 0.1         
+spring-boot                         2.3.12.RELEASE                 java-archive  GHSA-wwpq-f5c3-7hvx  High      0.1% (3rd)    < 0.1         
+logback-core                        1.2.13          1.5.33         java-archive  GHSA-p47f-322f-whfh  Low       0.4% (29th)   < 0.1         
+spring-webmvc                       5.2.25.RELEASE                 java-archive  GHSA-wg35-8jpf-2xv3  Low       0.2% (14th)   < 0.1         
+spring-security-web                 5.3.9.RELEASE                  java-archive  GHSA-293q-567p-wmwq  Medium    0.1% (1st)    < 0.1         
+xmlunit-core                        2.7.0           2.10.0         java-archive  GHSA-chfm-68vv-pvw5  Low       0.2% (12th)   < 0.1         
+logback-core                        1.2.13          1.3.15         java-archive  GHSA-6v67-2wr5-gvf4  Low       0.2% (13th)   < 0.1         
+logback-core                        1.2.13          1.5.25         java-archive  GHSA-qqpg-mvqg-649v  Low       0.2% (5th)    < 0.1         
+jackson-core                        2.13.5          2.18.6         java-archive  GHSA-72hv-8253-57qq  Medium    N/A           N/A
