@@ -21,7 +21,7 @@ buildscript {
     ext {
         jacocoVersion = '0.8.6'
         retrofitVersion = '2.9.0'
-        okhttpVersion = '4.9.0'
+        okhttpVersion = '4.9.3'
         oltuVersion = '1.0.1'
         fineractJavaProjects = subprojects.findAll{
             [
@@ -38,6 +38,7 @@ buildscript {
         }
     }
     repositories {
+        mavenCentral()
         jcenter()
         maven { url "https://plugins.gradle.org/m2/" }
     }
@@ -45,9 +46,19 @@ buildscript {
     dependencies {
         classpath 'com.bmuschko:gradle-cargo-plugin:2.8.0'
         classpath 'org.apache.openjpa:openjpa:3.2.0' // when upgrading, also change OpenJPA version repeated in fineract-provider/build.gradle!
-        classpath 'com.radcortez.gradle:openjpa-gradle-plugin:3.1.0'
+        classpath 'com.radcortez.gradle:openjpa-gradle-plugin:3.1.1'
         classpath 'gradle.plugin.com.github.spotbugs.snom:spotbugs-gradle-plugin:4.7.1'
         classpath 'gradle.plugin.com.github.andygoossens:gradle-modernizer-plugin:1.3.0'
+    }
+    // JCenter (Bintray) reached end-of-life in 2021 and no longer serves artifacts.
+    // Two build-plugin transitive dependencies were only ever published there, so pin
+    // them to the nearest equivalents still available on Maven Central to keep the
+    // buildscript classpath resolvable. Build-time only; no shipped artifact is affected.
+    configurations.classpath.resolutionStrategy {
+        force 'org.ajoberstar.grgit:grgit-core:4.1.1'
+        dependencySubstitution {
+            substitute module('com.burgstaller:okhttp-digest') using module('io.github.rburgst:okhttp-digest:1.21')
+        }
     }
 }
 
@@ -75,13 +86,14 @@ Run as:
 gradle clean bootRun'''
 
 project.ext.jerseyVersion = '1.19.4'
-ext['groovy.version'] = '3.0.6'
+ext['groovy.version'] = '3.0.9'
 ext['swaggerFile'] = "$rootDir/fineract-provider/build/classes/java/main/static/swagger-ui/fineract.yaml".toString()
 
 allprojects  {
     group = 'org.apache.fineract'
 
     repositories {
+        mavenCentral()
         jcenter()
     }
 
@@ -105,14 +117,81 @@ allprojects  {
             // We do not use :+ to get the latest available version available on Maven Central, as that could suddenly break things.
             // We use the Renovate Bot to automatically propose Pull Requests (PRs) when upgrades for all of these versions are available.
 
+            // ---------------------------------------------------------------------------
+            // CVE remediation for families managed by the Spring Boot BOM. Explicit entries
+            // are used (rather than BOM property overrides, which this plugin version ignores)
+            // and stay on lines that remain compatible with Spring Boot 2.3.x.
+            dependencySet(group: 'org.springframework', version: '5.2.25.RELEASE') {
+                // CVE-2022-22965 "Spring4Shell", CVE-2022-22950, CVE-2023-20861, CVE-2021-22060, CVE-2020-5421
+                entry 'spring-aop'
+                entry 'spring-aspects'
+                entry 'spring-beans'
+                entry 'spring-context'
+                entry 'spring-context-support'
+                entry 'spring-core'
+                entry 'spring-expression'
+                entry 'spring-jcl'
+                entry 'spring-jdbc'
+                entry 'spring-jms'
+                entry 'spring-messaging'
+                entry 'spring-orm'
+                entry 'spring-tx'
+                entry 'spring-web'
+                entry 'spring-webmvc'
+                entry 'spring-test'
+            }
+            dependencySet(group: 'org.springframework.security', version: '5.3.10.RELEASE') {
+                // CVE-2022-22978 (authorization bypass), CVE-2021-22112 (session fixation), CVE-2020-5408
+                entry 'spring-security-core'
+                entry 'spring-security-web'
+                entry 'spring-security-config'
+                entry 'spring-security-crypto'
+            }
+            dependencySet(group: 'org.apache.tomcat.embed', version: '9.0.120') {
+                // 30+ CVEs incl. CVE-2025-24813 (RCE), request smuggling, DoS (stays on 9.0.x)
+                entry 'tomcat-embed-core'
+                entry 'tomcat-embed-el'
+                entry 'tomcat-embed-websocket'
+            }
+            dependencySet(group: 'ch.qos.logback', version: '1.2.13') {
+                entry 'logback-core'    // CVE-2023-6378, CVE-2021-42550 (stays on 1.2.x)
+                entry 'logback-classic'
+            }
+            dependencySet(group: 'org.jetbrains.kotlin', version: '1.6.21') {
+                entry 'kotlin-stdlib'   // CVE-2020-29582, CVE-2022-24329
+                entry 'kotlin-stdlib-common'
+                entry 'kotlin-stdlib-jdk7'
+                entry 'kotlin-stdlib-jdk8'
+            }
+            dependencySet(group: 'org.apache.activemq', version: '5.16.7') {
+                entry 'activemq-broker' // CVE-2023-46604 (OpenWire RCE), CVE-2022-41678 (stays on 5.16.x)
+                entry 'activemq-client'
+                entry 'activemq-openwire-legacy'
+            }
+            // Jackson pinned to the 2.12.x line (Spring Boot 2.3.x-compatible). This both closes
+            // CVEs and keeps jackson-core/annotations in sync with the jackson-databind security
+            // release (2.12.7.1) pinned below, avoiding a core/databind version mismatch.
+            dependencySet(group: 'com.fasterxml.jackson.core', version: '2.12.7') {
+                entry 'jackson-core'
+                entry 'jackson-annotations'
+            }
+            dependencySet(group: 'com.fasterxml.jackson.datatype', version: '2.12.7') {
+                entry 'jackson-datatype-jdk8'
+                entry 'jackson-datatype-jsr310'
+            }
+            dependency 'com.fasterxml.jackson.dataformat:jackson-dataformat-cbor:2.12.7' // CVE-2020-28491
+            dependency 'com.fasterxml.jackson.module:jackson-module-parameter-names:2.12.7'
+            dependency 'org.yaml:snakeyaml:1.33'          // CVE-2022-25857 and related DoS (2.0 needed for CVE-2022-1471 but is API-breaking; see PR notes)
+            dependency 'net.minidev:json-smart:2.4.10'    // CVE-2021-27568, CVE-2023-1370 (stack overflow)
+
             dependency 'org.springframework.security.oauth:spring-security-oauth2:2.5.1.RELEASE'
             dependency 'org.apache.openjpa:openjpa:3.2.0' // when upgrading, also change OpenJPA version repeated above in buildscript!
-            dependency 'com.google.guava:guava:30.1.1-jre'
-            dependency 'com.google.code.gson:gson:2.8.6'
+            dependency 'com.google.guava:guava:30.1.1-jre' // NOTE: guava 32.x fixes CVE-2020-8908/CVE-2023-2976 (low sev, insecure temp dir) but its Gradle module metadata is ambiguous under Gradle 7.6; left as-is (see PR notes)
+            dependency 'com.google.code.gson:gson:2.8.9' // CVE-2022-25647
             dependency 'com.google.truth:truth:1.1.2'
             dependency 'com.google.truth.extensions:truth-java8-extension:1.1.2'
             dependency 'org.apache.commons:commons-email:1.5'
-            dependency 'commons-io:commons-io:2.8.0'
+            dependency 'commons-io:commons-io:2.14.0' // CVE-2024-47554 (uncontrolled resource consumption)
             dependency 'org.drizzle.jdbc:drizzle-jdbc:1.4'
             dependency 'com.github.librepdf:openpdf:1.3.26'
             dependency 'org.mnode.ical4j:ical4j:3.0.25'
@@ -129,10 +208,20 @@ allprojects  {
             dependency 'jakarta.xml.bind:jakarta.xml.bind-api:2.3.3'
             dependency 'org.glassfish.jaxb:jaxb-runtime:2.3.4'
             dependency 'jakarta.validation:jakarta.validation-api:3.0.0'
-            dependency 'org.apache.activemq:activemq-broker:5.16.2'
             dependency 'org.apache.bval:org.apache.bval.bundle:2.0.5'
 
-            dependency 'io.github.classgraph:classgraph:4.8.105'
+            // ---------------------------------------------------------------------------
+            // CVE remediation for other transitively-managed dependencies (not part of the
+            // Spring Boot BOM families handled above). Each is pinned to the nearest release
+            // that carries the security fix while preserving runtime behaviour.
+            dependency 'com.fasterxml.jackson.core:jackson-databind:2.12.7.1' // CVE-2020-36518 (extends the 2.12.7 jackson-bom with databind's security patch release)
+            dependency 'org.apache.commons:commons-compress:1.26.2' // CVE-2021-35515/35516/35517/36090, CVE-2024-25710, CVE-2024-26308 (DoS)
+            dependency 'org.codehaus.jettison:jettison:1.5.4' // CVE-2022-40149/40150, CVE-2023-1436 (DoS)
+            dependency 'com.google.oauth-client:google-oauth-client:1.34.1' // CVE-2021-22573 (IDToken signature bypass)
+            dependency 'com.mchange:mchange-commons-java:0.4.0' // CVE-2026-27727
+            dependency 'org.glassfish:jakarta.el:3.0.4' // CVE-2021-28170 (EL evaluation)
+
+            dependency 'io.github.classgraph:classgraph:4.8.112' // CVE-2021-47621
             dependency 'org.awaitility:awaitility:4.1.0'
             dependency 'com.github.spotbugs:spotbugs-annotations:4.2.3'
             dependency 'javax.cache:cache-api:1.1.1'

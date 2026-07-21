@@ -48,6 +48,10 @@ public class EmbeddedTomcatWithSSLConfiguration {
         return "/fineract-provider";
     }
 
+    // Tomcat 9.0.x deprecated the connector-level keystore setters in favour of SSLHostConfig,
+    // but they remain fully functional. Suppress the deprecation to preserve the existing TLS
+    // wiring unchanged while allowing the security-patched Tomcat 9.0.x upgrade.
+    @SuppressWarnings("deprecation")
     protected Connector createSslConnector() {
         Connector connector = new Connector("org.apache.coyote.http11.Http11NioProtocol");
         Http11NioProtocol protocol = (Http11NioProtocol) connector.getProtocolHandler();
