@@ -30,7 +30,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.ImportResource;
 import org.springframework.context.annotation.PropertySource;
-import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 /**
@@ -51,7 +50,9 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 @EnableAutoConfiguration(exclude = { DataSourceAutoConfiguration.class, HibernateJpaAutoConfiguration.class,
         DataSourceTransactionManagerAutoConfiguration.class, FlywayAutoConfiguration.class, GsonAutoConfiguration.class,
         JdbcTemplateAutoConfiguration.class })
-@EnableWebSecurity
+// NOTE (Java 17 baseline / Spring Boot 2.7 upgrade): @EnableWebSecurity removed here. Web security is enabled by the
+// legacy XML <http> namespace in securityContext.xml; keeping the annotation as well now double-registers the
+// 'springSecurityFilterChain' bean under Spring Security 5.7 ("Alias would override bean definition").
 @EnableTransactionManagement
 public abstract class AbstractApplicationConfiguration {
 

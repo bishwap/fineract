@@ -26,7 +26,7 @@ import io.restassured.specification.ResponseSpecification;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Random;
+import java.util.concurrent.ThreadLocalRandom;
 import org.apache.fineract.integrationtests.common.AuditHelper;
 import org.apache.fineract.integrationtests.common.ClientHelper;
 import org.apache.fineract.integrationtests.common.OfficeHelper;
@@ -117,10 +117,9 @@ public class AuditIntegrationTest {
             this.clientHelper.reactivateClient(clientId);
         }
 
-        Random rand = new Random();
         for (int i = 0; i < 3; i++) {
             // limit contains a number between 1-8
-            int limit = rand.nextInt(7) + 1;
+            int limit = ThreadLocalRandom.current().nextInt(7) + 1;
             auditHelper.verifyLimitParameterfor(limit);
         }
     }

@@ -21,8 +21,8 @@ package org.apache.fineract.portfolio.loanaccount.service;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Random;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ThreadLocalRandom;
 import org.apache.fineract.infrastructure.core.service.ThreadLocalContextUtil;
 import org.apache.fineract.infrastructure.jobs.exception.JobExecutionException;
 import org.slf4j.Logger;
@@ -77,8 +77,7 @@ public class RecalculateInterestPoster implements Callable<Void> {
                         // Else sleep for a random time (between 1 to 10
                         // seconds) and continue
                         try {
-                            Random random = new Random();
-                            int randomNum = random.nextInt(maxIntervalBetweenRetries + 1);
+                            int randomNum = ThreadLocalRandom.current().nextInt(maxIntervalBetweenRetries + 1);
                             Thread.sleep(1000 + (randomNum * 1000));
                             numberOfRetries = numberOfRetries + 1;
                         } catch (InterruptedException e) {
