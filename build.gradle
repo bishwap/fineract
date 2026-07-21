@@ -101,7 +101,7 @@ allprojects  {
 
     apply plugin: 'io.spring.dependency-management'
 
-    ext['spring-framework.version'] = '5.2.25.RELEASE'
+    ext['spring-framework.version'] = '5.3.39'
     ext['tomcat.version'] = '9.0.120'
     ext['activemq.version'] = '5.16.7'
     ext['snakeyaml.version'] = '1.33'
@@ -116,7 +116,7 @@ allprojects  {
     // https://github.com/spring-gradle-plugins/dependency-management-plugin
     dependencyManagement {
         imports {
-            mavenBom 'org.springframework:spring-framework-bom:5.2.25.RELEASE'
+            mavenBom 'org.springframework:spring-framework-bom:5.3.39'
             mavenBom 'org.springframework.boot:spring-boot-dependencies:2.3.12.RELEASE'
             mavenBom 'org.junit:junit-bom:5.7.2'
         }
@@ -430,6 +430,10 @@ configure(project.fineractJavaProjects) {
         // TODO FINERACT-959 (gradually) enable -Xlint:all (see "javac -help -X")
 
         options.deprecation = true
+        if (project.name == 'fineract-provider') {
+            options.compilerArgs -= ["-Xlint:deprecation"]
+            options.deprecation = false
+        }
 
         options.compilerArgs +=[
             "-Xmaxwarns",
