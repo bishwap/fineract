@@ -21,7 +21,7 @@ package org.apache.fineract.accounting.journalentry.api;
 import java.time.LocalDate;
 import java.util.Date;
 import java.util.Locale;
-import javax.ws.rs.WebApplicationException;
+import jakarta.ws.rs.WebApplicationException;
 import org.apache.fineract.infrastructure.core.serialization.JsonParserHelper;
 import org.apache.fineract.infrastructure.core.service.DateUtils;
 

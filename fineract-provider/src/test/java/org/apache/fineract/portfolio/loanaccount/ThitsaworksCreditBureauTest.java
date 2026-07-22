@@ -25,7 +25,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.sun.jersey.core.header.FormDataContentDisposition;
 import java.io.File;
-import javax.ws.rs.core.UriInfo;
+import jakarta.ws.rs.core.UriInfo;
 import org.apache.fineract.infrastructure.core.serialization.FromJsonHelper;
 import org.apache.fineract.infrastructure.creditbureau.service.CreditReportWritePlatformServiceImpl;
 import org.apache.fineract.infrastructure.creditbureau.service.ThitsaWorksCreditBureauIntegrationWritePlatformServiceImpl;

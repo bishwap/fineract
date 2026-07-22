@@ -21,8 +21,8 @@ package org.apache.fineract.infrastructure.core.filters;
 import com.sun.jersey.spi.container.ContainerRequest;
 import com.sun.jersey.spi.container.ContainerResponse;
 import com.sun.jersey.spi.container.ContainerResponseFilter;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Response.ResponseBuilder;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.Response.ResponseBuilder;
 
 /**
  * Filter that returns a response with headers that allows for Cross-Origin Requests (CORs) to be performed against the

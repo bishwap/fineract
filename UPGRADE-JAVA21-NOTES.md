@@ -143,3 +143,58 @@ dead-jcenter transitive deps (all fixed in the Phase 1 commits):**
 **Result:** `./gradlew help` configures cleanly on Gradle 8.7 + JDK 21 with the Boot 3.2.5 / Framework
 6.1.6 BOMs. As the brief predicted, this does **not compile** yet — Spring Boot 3 pulls
 `jakarta.*` APIs while the source still imports `javax.*`. That is Phase 3.
+
+---
+
+## Phase 3 — `javax.*` -> `jakarta.*` namespace migration
+
+**Scripted find/replace** across all non-`build/` `*.java` files (a single `perl -i` pass, word-boundary
+anchored so we don't hit unrelated packages), doing exactly these prefix rewrites:
+
+```
+javax.persistence            -> jakarta.persistence   (covers .spi too)
+javax.ws.rs                  -> jakarta.ws.rs         (covers .core / .ext)
+javax.servlet                -> jakarta.servlet       (covers .http)
+javax.jms                    -> jakarta.jms
+javax.mail                   -> jakarta.mail          (covers .internet)
+javax.xml.bind               -> jakarta.xml.bind      (JAXB only; NOT javax.xml.parsers/transform)
+javax.validation             -> jakarta.validation
+javax.annotation.PostConstruct -> jakarta.annotation.PostConstruct
+javax.annotation.PreDestroy    -> jakarta.annotation.PreDestroy
+```
+
+**Deliberately NOT rewritten** (verified by re-grepping afterwards — these are all that remain and are
+correct):
+
+- `javax.annotation.Nullable` — JSR-305 (findbugs/spotbugs), never moved to Jakarta.
+- `javax.cache` — JCache (JSR-107) keeps the `javax.cache` namespace under Jakarta EE 9+.
+- Java SE packages: `javax.sql`, `javax.net.ssl`, `javax.script`, `javax.imageio`, `javax.xml.parsers`.
+- `javax.inject` / `javax.annotation.Resource` / `javax.annotation.Priority`: the only remaining hits
+  are **comments and one classpath-string** inside the test
+  `ClasspathHellDuplicatesChecker` (a duplicate-class detector); there are no real `javax.inject`
+  imports in production code, so nothing to migrate there.
+
+**XML descriptors:**
+
+- `META-INF/persistence.xml`: namespace `http://java.sun.com/xml/ns/persistence` (v2.0) ->
+  `https://jakarta.ee/xml/ns/persistence` (v3.0).
+- `WEB-INF/web.xml`: `http://java.sun.com/xml/ns/javaee` (web-app 3.0) ->
+  `https://jakarta.ee/xml/ns/jakartaee` (web-app 6.0). (This descriptor is effectively unused under
+  Spring Boot but was updated for correctness.)
+
+**Dependency-coordinate updates** (root `dependencyManagement`) needed because the *jakarta namespace*
+only appears at higher API versions:
+
+- `jakarta.jms:jakarta.jms-api` 2.0.3 -> **3.1.0** (2.0.x still ships the `javax.jms` package).
+- `jakarta.xml.bind:jakarta.xml.bind-api` 2.3.3 -> **4.0.2** (2.3.x still ships `javax.xml.bind`).
+- `org.glassfish.jaxb:jaxb-runtime` 2.3.4 -> **4.0.5** (jakarta JAXB runtime).
+- `jakarta.validation:jakarta.validation-api` 3.0.0 -> **3.0.2**.
+
+**Known follow-ups deferred to later phases / Phase 8 build:**
+
+- The JAX-RS API is now `jakarta.ws.rs`, but the *implementation* on the classpath is still Sun Jersey
+  1.19.4 (`javax.ws.rs`). Compilation will not succeed until **Phase 5** swaps Jersey.
+- `jakarta.mail` imports now require a `jakarta.mail-api` provider; Apache Commons Email 1.5 (still
+  `javax.mail`) is a likely conflict — flagged for Phase 8.
+- `com.sun.activation:jakarta.activation:1.2.2` (javax.activation) vs. jakarta activation 2.1 — flagged
+  for Phase 8.

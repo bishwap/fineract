@@ -19,11 +19,11 @@
 package org.apache.fineract.infrastructure.core.domain;
 
 import java.io.Serializable;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.MappedSuperclass;
-import javax.persistence.Transient;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.MappedSuperclass;
+import jakarta.persistence.Transient;
 import org.springframework.data.domain.Persistable;
 
 /**
@@ -31,7 +31,7 @@ import org.springframework.data.domain.Persistable;
  *
  * Inspired by {@link org.springframework.data.jpa.domain.AbstractPersistable}, but Id is always Long (and this class
  * thus does not require generic parameterization), and auto-generation is of strategy
- * {@link javax.persistence.GenerationType#IDENTITY}.
+ * {@link jakarta.persistence.GenerationType#IDENTITY}.
  *
  * The {@link #equals(Object)} and {@link #hashCode()} methods are NOT implemented here, which is untypical for JPA
  * (it's usually implemented based on the Id), because "we end up with issues on OpenJPA" (TODO clarify this).
