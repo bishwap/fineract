@@ -106,3 +106,40 @@ lint/test target `fineract-client`):**
 
 **Not yet touched / known follow-ups (surfaced by build in Phase 8):** other lazy-property /
 `buildDir` deprecations, `sourceSets…outputDir`, and any plugin that still rejects JDK 21 at runtime.
+
+**Iterating `./gradlew help` to a clean configuration surfaced a chain of Gradle-8 removals and
+dead-jcenter transitive deps (all fixed in the Phase 1 commits):**
+
+- `com.radcortez.gradle:openjpa-gradle-plugin` 3.1.0 was jcenter-only -> 3.2.0 (latest published).
+- `gradle-git-properties` 2.2.4 pulled `org.ajoberstar.grgit:grgit-core:4.1.0` (jcenter) -> bumped to
+  2.4.1 (grgit 5.x on Maven Central); its `gitPropertiesResourceDir` is now a `Directory` property,
+  so the value is wrapped in `file(...)`.
+- The `org.asciidoctor.jvm.gems` / `.epub` / kindlegen plugins (declared `apply false`, never actually
+  applied) transitively dragged in the jcenter-only `com.burgstaller:okhttp-digest:1.10` via
+  `jruby-gradle`/`http-builder-ng`. Removed the three unused plugins; bumped the *used* asciidoctor
+  plugins (`convert`/`pdf`/`revealjs`) 3.3.2 -> 4.0.4 (4.0.2 is not published for revealjs).
+- spotbugs plugin 6.x: `reportLevel = 'high'` -> `reportLevel = Confidence.valueOf('HIGH')`; report
+  `enabled` -> `required`; spotbugs core 4.2.2 -> 4.8.3.
+- `fineract-doc`: `archiveName` -> `archiveFileName`.
+
+---
+
+## Phase 2 — Spring Boot 3 / Framework 6
+
+**Done:**
+
+- Root `build.gradle` BOM imports:
+  - `spring-framework-bom` 5.3.7 -> **6.1.6**
+  - `spring-boot-dependencies` 2.3.5.RELEASE -> **3.2.5**
+  - `junit-bom` 5.7.2 -> 5.10.2 (5.7.2 predates the JUnit that Boot 3.2 expects)
+- `spring-boot-starter-mail` pin 2.3.4.RELEASE -> 3.2.5.
+- The `org.springframework.boot` Gradle plugin was bumped to 3.2.5 in the Phase 1 `plugins {}` block
+  (it lives alongside the other plugin coordinates); the BOM/version wiring is completed here.
+- Spring Boot 3 Gradle plugin API changes in `fineract-provider/build.gradle`:
+  - `springBoot { mainClassName = … }` -> `mainClass = …`
+  - Gradle 8 archive-API: `Tar.extension` -> `archiveExtension`; distribution `baseName` ->
+    `distributionBaseName`; `tasks.*.enabled false` -> `enabled = false`.
+
+**Result:** `./gradlew help` configures cleanly on Gradle 8.7 + JDK 21 with the Boot 3.2.5 / Framework
+6.1.6 BOMs. As the brief predicted, this does **not compile** yet — Spring Boot 3 pulls
+`jakarta.*` APIs while the source still imports `javax.*`. That is Phase 3.
