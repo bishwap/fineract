@@ -198,3 +198,43 @@ only appears at higher API versions:
   `javax.mail`) is a likely conflict — flagged for Phase 8.
 - `com.sun.activation:jakarta.activation:1.2.2` (javax.activation) vs. jakarta activation 2.1 — flagged
   for Phase 8.
+
+---
+
+## Phase 4 — Persistence provider (OpenJPA) — HIGH RISK
+
+**Decision: OpenJPA 4.0.0 is a viable `jakarta.persistence` provider — upgraded (not blocked).**
+
+Investigation (evidence gathered from Maven Central POMs):
+
+- OpenJPA **4.0.0** (and 4.0.1/4.1.x) declare `Specification-Title: Jakarta Persistence` and depend on
+  the true jakarta-namespaced APIs:
+  - `jakarta.persistence:jakarta.persistence-api:3.0.0` (the `jakarta.persistence.*` package; 2.2.x is
+    still `javax.persistence`)
+  - `jakarta.jms:jakarta.jms-api:3.1.0`, `jakarta.transaction:jakarta.transaction-api:2.0.1`,
+    `jakarta.annotation:jakarta.annotation-api:2.1.1`
+- The 3.x line (incl. 3.2.2) is `javax.persistence`; it also uses the legacy **serp** bytecode library,
+  which does not handle Java 9+ class files and fails to enhance on JDK 17/21. OpenJPA **4.0.0** replaced
+  serp with ASM, so its enhancer runs on JDK 21. This is the decisive reason to go to 4.0.0.
+
+Changes made (all three pinned locations):
+
+- `buildscript` classpath: `org.apache.openjpa:openjpa` 3.2.0 -> **4.0.0**.
+- `dependencyManagement`: `org.apache.openjpa:openjpa` 3.2.0 -> **4.0.0** (this is what
+  `fineract-provider/dependencies.gradle` resolves via `implementation('org.apache.openjpa:openjpa')`).
+- `META-INF/persistence.xml` already updated to Jakarta Persistence 3.0 in Phase 3; the provider class
+  `org.apache.openjpa.persistence.PersistenceProviderImpl` keeps the same FQN in 4.0.0.
+
+**The enhancer Gradle plugin (`com.radcortez.gradle:openjpa-gradle-plugin`) — residual risk:**
+
+- There is **no jakarta-specific / 4.x release** of this plugin; 3.2.0 is the latest published (3.1.0,
+  the version the baseline pinned, was jcenter-only and is now unresolvable).
+- Its Gradle module metadata shows only a *soft* `requires org.apache.openjpa:openjpa:3.2.2`. Because we
+  put `openjpa:4.0.0` explicitly on the same `buildscript` classpath, Gradle conflict-resolution selects
+  4.0.0, so the plugin drives the **4.0.0** `PCEnhancer`. This is the closest thing to "upgrading the
+  enhancer plugin" that exists.
+- **Residual risk (verify in Phase 8):** the 3.2.0 plugin was compiled against the 3.2.2 enhancer API.
+  If `PCEnhancer`'s invoked API changed in 4.0.0 the `openjpaEnhance` task could fail at runtime. If that
+  happens, the documented fallback is to drop the plugin and run the enhancer directly via a `JavaExec`
+  task invoking `org.apache.openjpa.enhance.PCEnhancer` against the 4.0.0 classpath (no third-party
+  plugin needed). Left as a follow-up rather than pre-emptively rewritten.

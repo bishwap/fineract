@@ -44,8 +44,8 @@ buildscript {
 
     dependencies {
         classpath 'com.bmuschko:gradle-cargo-plugin:2.8.0'
-        classpath 'org.apache.openjpa:openjpa:3.2.0' // when upgrading, also change OpenJPA version repeated in fineract-provider/build.gradle! See UPGRADE-JAVA21-NOTES.md Phase 4.
-        classpath 'com.radcortez.gradle:openjpa-gradle-plugin:3.2.0' // 3.1.0 was jcenter-only; 3.2.0 is the latest published. BLOCKER: no jakarta-capable release; see UPGRADE-JAVA21-NOTES.md Phase 4.
+        classpath 'org.apache.openjpa:openjpa:4.0.0' // jakarta.persistence-based (Jakarta Persistence 3.1); ASM-based enhancer runs on JDK 21. See UPGRADE-JAVA21-NOTES.md Phase 4.
+        classpath 'com.radcortez.gradle:openjpa-gradle-plugin:3.2.0' // no 4.x release exists; it only soft-requires openjpa 3.2.2, so the 4.0.0 above wins on the buildscript classpath and drives the enhancer. See UPGRADE-JAVA21-NOTES.md Phase 4.
         classpath 'com.github.spotbugs.snom:spotbugs-gradle-plugin:6.0.18'
         classpath 'com.github.andygoossens:gradle-modernizer-plugin:1.9.2'
     }
@@ -107,7 +107,7 @@ allprojects  {
             // We use the Renovate Bot to automatically propose Pull Requests (PRs) when upgrades for all of these versions are available.
 
             dependency 'org.springframework.security.oauth:spring-security-oauth2:2.5.1.RELEASE'
-            dependency 'org.apache.openjpa:openjpa:3.2.0' // when upgrading, also change OpenJPA version repeated above in buildscript!
+            dependency 'org.apache.openjpa:openjpa:4.0.0' // jakarta.persistence-based; when upgrading, also change OpenJPA version repeated above in buildscript!
             dependency 'com.google.guava:guava:30.1.1-jre'
             dependency 'com.google.code.gson:gson:2.8.6'
             dependency 'com.google.truth:truth:1.1.2'
