@@ -112,8 +112,10 @@ tasks.withType(JavaCompile) {
 }
 
 configurations {
-    generatedCompile.extendsFrom implementation
-    generatedRuntime.extendsFrom runtime
+    // Gradle 7 removed the legacy 'compile'/'runtime' configurations; wire the generated
+    // source set's classpath to the modern 'implementation'/'runtimeOnly' ones instead.
+    generatedImplementation.extendsFrom implementation
+    generatedRuntimeOnly.extendsFrom runtimeOnly
 }
 
 test {

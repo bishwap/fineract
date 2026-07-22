@@ -25,7 +25,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Random;
+import java.util.concurrent.ThreadLocalRandom;
 import org.apache.fineract.infrastructure.core.service.DateUtils;
 import org.apache.fineract.integrationtests.common.Utils;
 import org.apache.fineract.integrationtests.common.accounting.Account;
@@ -44,8 +44,7 @@ public final class ProvisioningHelper {
         DateFormat simple = new SimpleDateFormat("dd MMMM yyyy");
         String formattedString = simple
                 .format(Date.from(Utils.getLocalDateOfTenant().atStartOfDay(DateUtils.getDateTimeZoneOfTenant()).toInstant()));
-        Random rand = new Random();
-        String criteriaName = "General Provisioning Criteria" + formattedString + rand.nextLong();
+        String criteriaName = "General Provisioning Criteria" + formattedString + ThreadLocalRandom.current().nextLong();
         map.put("criteriaName", criteriaName);
         map.put("locale", "en");
         return map;

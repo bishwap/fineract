@@ -18,7 +18,6 @@
  */
 package org.apache.fineract.portfolio.transfer.service;
 
-import com.google.common.collect.Iterables;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import java.time.LocalDate;
@@ -458,7 +457,7 @@ public class TransferWritePlatformServiceJpaRepositoryImpl implements TransferWr
                     } else if (!destinationGroup.isActive()) {
                         throw new GroupNotActiveException(destinationGroup.getId());
                     }
-                    transferClientBetweenGroups(Iterables.get(client.getGroups(), 0), client, destinationGroup, true, staff);
+                    transferClientBetweenGroups(client.getGroups().iterator().next(), client, destinationGroup, true, staff);
                 } else if (client.getGroups().size() == 0 && destinationGroup != null) {
                     client.getGroups().add(destinationGroup);
                     client.updateStaff(destinationGroup.getStaff());
