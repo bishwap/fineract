@@ -347,3 +347,23 @@ Options for the reviewer:
 
 Until one is chosen, running with `-Dspring.profiles.active=oauth` is expected to fail; `basicauth`
 (the default) is the supported path in this branch.
+
+---
+
+## Phase 7 — Docker & CI
+
+**`Dockerfile`:**
+- Builder `FROM openjdk:11` -> `FROM eclipse-temurin:21-jdk` (the `openjdk:*` images are deprecated;
+  Temurin is the maintained JDK 21 image and matches the toolchain used elsewhere).
+- Runtime `FROM gcr.io/distroless/java:11` -> `FROM gcr.io/distroless/java21-debian12` (distroless no
+  longer publishes a `java:11` tag; the versioned `java21-debian12` is the current form).
+- ENTRYPOINT and jar paths unchanged: the bootJar is still
+  `fineract-provider/build/libs/fineract-provider.jar` and is launched with
+  `-Dloader.path=/app/libs/`, which remains valid for a Boot 3 fat jar.
+
+**`.travis.yml`:**
+- `dist: bionic` -> `dist: jammy` (Ubuntu 22.04) — bionic (18.04) has no `openjdk-21-jdk-headless` apt
+  package.
+- `apt-get install openjdk-11-jdk-headless` -> `openjdk-21-jdk-headless`; `JAVA_HOME` set to
+  `/usr/lib/jvm/java-21-openjdk-amd64/`.
+- CI is not exercised here (Travis is external); these are the mechanical version bumps.
