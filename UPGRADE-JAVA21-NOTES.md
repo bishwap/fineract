@@ -238,3 +238,48 @@ Changes made (all three pinned locations):
   happens, the documented fallback is to drop the plugin and run the enhancer directly via a `JavaExec`
   task invoking `org.apache.openjpa.enhance.PCEnhancer` against the 4.0.0 classpath (no third-party
   plugin needed). Left as a follow-up rather than pre-emptively rewritten.
+
+---
+
+## Phase 5 — JAX-RS / Jersey (Sun Jersey 1.19.4 -> Jersey 3.1.5)
+
+Sun Jersey 1.19.4 (`com.sun.jersey`) is abandoned and `javax.ws.rs`-only, so it cannot satisfy the
+`jakarta.ws.rs` imports produced in Phase 3. Migrated to **Jersey 3.1.5** (`org.glassfish.jersey`,
+jakarta-based). `project.ext.jerseyVersion` 1.19.4 -> **3.1.5**.
+
+**Dependency coordinates** (`fineract-provider/dependencies.gradle`):
+
+| old (`com.sun.jersey*`) | new (`org.glassfish.jersey*` 3.1.5) |
+|---|---|
+| `jersey-core`, `jersey-server` | `core:jersey-server` |
+| `jersey-servlet` | `containers:jersey-container-servlet` + `containers:jersey-container-servlet-core` |
+| `contribs:jersey-multipart` | `media:jersey-media-multipart` |
+| `jersey-json` | `media:jersey-media-json-jackson` |
+| `contribs:jersey-spring` | `ext:jersey-spring6` (Spring 6 integration) |
+| (implicit) | `inject:jersey-hk2` (DI runtime) |
+
+**API differences encountered / code changes:**
+
+- **Servlet registration** (`WebXmlConfiguration`, `WebXmlOauthConfiguration`): the old
+  `com.sun.jersey…SpringServlet` + string init-params (`POJOMappingFeature`, `DisableWADL`,
+  `ContainerResponseFilters`) is gone. Replaced with a standard Jersey
+  `org.glassfish.jersey.servlet.ServletContainer` driven by a new `ResourceConfig`
+  (`FineractJerseyConfig`) still mapped at `/api/v1/*`. Spring-bean bridging that Sun Jersey's
+  `SpringServlet` did is now provided by `jersey-spring6`'s auto-registered `SpringComponentProvider`,
+  so the 139 `@Component`/`@Path` resources keep their injected dependencies.
+- **`FineractJerseyConfig`** (new) scans package `org.apache.fineract` for `@Path`/`@Provider`, registers
+  `MultiPartFeature` and the CORS filter, and disables WADL via `ServerProperties.WADL_FEATURE_DISABLE`.
+- **`ResponseCorsFilter`**: reimplemented from the proprietary
+  `com.sun.jersey.spi.container.ContainerResponseFilter` (`filter(ContainerRequest, ContainerResponse)`
+  returning a response) to the standard JAX-RS
+  `jakarta.ws.rs.container.ContainerResponseFilter` (`filter(requestCtx, responseCtx)` mutating
+  `responseCtx.getHeaders()`), annotated `@Provider`.
+- **Multipart** (26×`FormDataContentDisposition`, 18×`FormDataParam`, 4×`FormDataBodyPart`): package
+  `com.sun.jersey.core.header` / `com.sun.jersey.multipart` -> `org.glassfish.jersey.media.multipart`
+  (scripted).
+- **`Base64`** (`AuthenticationApiResource`): `com.sun.jersey.core.util.Base64.encode(String)` -> JDK
+  `java.util.Base64.getEncoder().encode(bytes)`.
+- **`MultivaluedMapImpl`** (`ReportMailingJobWritePlatformServiceImpl`):
+  `com.sun.jersey.core.util.MultivaluedMapImpl` -> standard `jakarta.ws.rs.core.MultivaluedHashMap`.
+
+No remaining `com.sun.jersey` references anywhere in `fineract-provider/src`.

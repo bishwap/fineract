@@ -18,9 +18,9 @@
  */
 package org.apache.fineract.infrastructure.documentmanagement.api;
 
-import com.sun.jersey.core.header.FormDataContentDisposition;
-import com.sun.jersey.multipart.FormDataBodyPart;
-import com.sun.jersey.multipart.FormDataParam;
+import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
+import org.glassfish.jersey.media.multipart.FormDataBodyPart;
+import org.glassfish.jersey.media.multipart.FormDataParam;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Base64;

@@ -18,7 +18,7 @@
  */
 package org.apache.fineract.infrastructure.creditbureau.service;
 
-import com.sun.jersey.core.header.FormDataContentDisposition;
+import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;

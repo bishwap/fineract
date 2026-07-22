@@ -74,7 +74,7 @@ description = '''\
 Run as:
 gradle clean bootRun'''
 
-project.ext.jerseyVersion = '1.19.4'
+project.ext.jerseyVersion = '3.1.5' // Sun Jersey 1.19.4 (com.sun.jersey, javax.ws.rs) is abandoned; migrated to Jersey 3.1.x (org.glassfish.jersey, jakarta). See UPGRADE-JAVA21-NOTES.md Phase 5.
 // groovy.version override removed: the Spring Boot 3.2 BOM manages Groovy 4.0.x (org.apache.groovy).
 // The old pin (3.0.6) forced a non-existent org.apache.groovy:groovy-bom:3.0.6. See UPGRADE-JAVA21-NOTES.md Phase 2.
 ext['swaggerFile'] = "$rootDir/fineract-provider/build/classes/java/main/static/swagger-ui/fineract.yaml".toString()

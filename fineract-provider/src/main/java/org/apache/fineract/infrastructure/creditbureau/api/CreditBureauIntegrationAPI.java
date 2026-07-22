@@ -20,8 +20,8 @@
 package org.apache.fineract.infrastructure.creditbureau.api;
 
 import com.google.gson.Gson;
-import com.sun.jersey.core.header.FormDataContentDisposition;
-import com.sun.jersey.multipart.FormDataParam;
+import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
+import org.glassfish.jersey.media.multipart.FormDataParam;
 import io.swagger.v3.oas.annotations.Parameter;
 import java.io.File;
 import java.io.InputStream;

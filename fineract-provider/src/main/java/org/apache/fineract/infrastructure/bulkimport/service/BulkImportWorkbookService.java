@@ -18,7 +18,7 @@
  */
 package org.apache.fineract.infrastructure.bulkimport.service;
 
-import com.sun.jersey.core.header.FormDataContentDisposition;
+import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import java.io.InputStream;
 import java.util.Collection;
 import jakarta.ws.rs.core.Response;

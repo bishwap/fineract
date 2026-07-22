@@ -23,7 +23,7 @@ import static org.mockito.Mockito.when;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import com.sun.jersey.core.header.FormDataContentDisposition;
+import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import java.io.File;
 import jakarta.ws.rs.core.UriInfo;
 import org.apache.fineract.infrastructure.core.serialization.FromJsonHelper;

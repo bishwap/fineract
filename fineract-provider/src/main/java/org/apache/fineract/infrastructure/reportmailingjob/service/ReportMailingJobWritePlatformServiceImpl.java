@@ -18,7 +18,7 @@
  */
 package org.apache.fineract.infrastructure.reportmailingjob.service;
 
-import com.sun.jersey.core.util.MultivaluedMapImpl;
+import jakarta.ws.rs.core.MultivaluedHashMap;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -266,7 +266,7 @@ public class ReportMailingJobWritePlatformServiceImpl implements ReportMailingJo
                     final StringBuilder errorLog = new StringBuilder();
                     final Map<String, String> validateStretchyReportParamMap = this.reportMailingJobValidator
                             .validateStretchyReportParamMap(reportMailingJob.getStretchyReportParamMap());
-                    MultivaluedMap<String, String> reportParams = new MultivaluedMapImpl();
+                    MultivaluedMap<String, String> reportParams = new MultivaluedHashMap<>();
 
                     if (validateStretchyReportParamMap != null) {
                         Iterator<Map.Entry<String, String>> validateStretchyReportParamMapEntries = validateStretchyReportParamMap
