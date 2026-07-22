@@ -18,11 +18,11 @@
  */
 package org.apache.fineract.adhocquery.domain;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.fineract.adhocquery.api.AdHocJsonInputParams;

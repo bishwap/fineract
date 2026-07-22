@@ -18,13 +18,13 @@
  */
 package org.apache.fineract.notification.eventandlistener;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
 import jakarta.jms.JMSException;
 import jakarta.jms.Message;
 import jakarta.jms.ObjectMessage;
 import jakarta.jms.Session;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 import org.apache.fineract.infrastructure.core.domain.FineractPlatformTenant;
 import org.apache.fineract.infrastructure.core.service.ThreadLocalContextUtil;
 import org.apache.fineract.infrastructure.security.service.BasicAuthTenantDetailsService;

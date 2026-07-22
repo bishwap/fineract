@@ -18,9 +18,9 @@
  */
 package org.apache.fineract.infrastructure.configuration.domain;
 
-import java.io.Serializable;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
+import java.io.Serializable;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 

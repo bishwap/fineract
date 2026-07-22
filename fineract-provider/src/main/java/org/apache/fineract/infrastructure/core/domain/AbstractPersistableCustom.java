@@ -18,12 +18,12 @@
  */
 package org.apache.fineract.infrastructure.core.domain;
 
-import java.io.Serializable;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.MappedSuperclass;
 import jakarta.persistence.Transient;
+import java.io.Serializable;
 import org.springframework.data.domain.Persistable;
 
 /**

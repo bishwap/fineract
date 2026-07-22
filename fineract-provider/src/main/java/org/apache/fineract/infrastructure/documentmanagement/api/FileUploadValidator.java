@@ -18,10 +18,10 @@
  */
 package org.apache.fineract.infrastructure.documentmanagement.api;
 
-import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
-import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import java.io.InputStream;
 import org.apache.fineract.infrastructure.core.data.DataValidatorBuilder;
+import org.glassfish.jersey.media.multipart.FormDataBodyPart;
+import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.springframework.stereotype.Component;
 
 /**

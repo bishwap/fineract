@@ -18,9 +18,9 @@
  */
 package org.apache.fineract.infrastructure.core.service;
 
+import jakarta.annotation.PostConstruct;
 import java.util.List;
 import java.util.Map;
-import jakarta.annotation.PostConstruct;
 import javax.sql.DataSource;
 import org.apache.fineract.infrastructure.core.boot.JDBCDriverConfig;
 import org.apache.fineract.infrastructure.core.domain.FineractPlatformTenant;

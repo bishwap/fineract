@@ -18,10 +18,10 @@
  */
 package org.apache.fineract.infrastructure.openjpa;
 
-import java.sql.Connection;
-import java.sql.SQLException;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceException;
+import java.sql.Connection;
+import java.sql.SQLException;
 import org.apache.commons.logging.LogFactory;
 import org.apache.openjpa.persistence.FetchPlan;
 import org.apache.openjpa.persistence.OpenJPAEntityManager;

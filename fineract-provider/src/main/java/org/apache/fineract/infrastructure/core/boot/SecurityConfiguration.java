@@ -48,7 +48,8 @@ import org.springframework.security.web.context.SecurityContextHolderFilter;
  * The legacy XML {@code <http use-expressions="true">} DSL, the {@code access-decision-manager}/voter model and the
  * {@code spring-security-oauth2} authorization-server were all removed in Spring Security 6. Only the default
  * {@code basicauth} profile is rebuilt here as a {@link SecurityFilterChain}. The {@code oauth} profile is a documented
- * blocker (see UPGRADE-JAVA21-NOTES.md Phase 6) pending a rebuild on Spring Authorization Server / Boot resource-server.
+ * blocker (see UPGRADE-JAVA21-NOTES.md Phase 6) pending a rebuild on Spring Authorization Server / Boot
+ * resource-server.
  *
  * <p>
  * NOTE: this configuration is a best-effort, review-required translation of the XML rules; it has not been runtime
@@ -73,8 +74,8 @@ public class SecurityConfiguration {
     }
 
     @Bean
-    public DaoAuthenticationProvider customAuthenticationProvider(@Qualifier("userDetailsService") final UserDetailsService userDetailsService,
-            final PasswordEncoder passwordEncoder) {
+    public DaoAuthenticationProvider customAuthenticationProvider(
+            @Qualifier("userDetailsService") final UserDetailsService userDetailsService, final PasswordEncoder passwordEncoder) {
         final DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
         provider.setUserDetailsService(userDetailsService);
         provider.setPasswordEncoder(passwordEncoder);
@@ -96,8 +97,8 @@ public class SecurityConfiguration {
             final AuthenticationEntryPoint basicAuthenticationEntryPoint) throws Exception {
 
         http.securityMatcher(antMatcher("/api/**"))
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .csrf(csrf -> csrf.disable()).requiresChannel(channel -> channel.anyRequest().requiresSecure())
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)).csrf(csrf -> csrf.disable())
+                .requiresChannel(channel -> channel.anyRequest().requiresSecure())
                 .exceptionHandling(handling -> handling.authenticationEntryPoint(basicAuthenticationEntryPoint))
                 .authorizeHttpRequests(auth -> auth.requestMatchers(antMatcher("/api/*/echo")).permitAll()
                         .requestMatchers(antMatcher(HttpMethod.POST, "/api/*/authentication")).permitAll()
@@ -106,8 +107,8 @@ public class SecurityConfiguration {
                         .requestMatchers(antMatcher(HttpMethod.POST, "/api/*/self/registration/user")).permitAll()
                         .requestMatchers(antMatcher(HttpMethod.GET, "/api/*/twofactor")).fullyAuthenticated()
                         .requestMatchers(antMatcher(HttpMethod.POST, "/api/*/twofactor")).fullyAuthenticated()
-                        .requestMatchers(antMatcher(HttpMethod.POST, "/api/*/twofactor/validate")).fullyAuthenticated()
-                        .anyRequest().access(new WebExpressionAuthorizationManager(TWO_FACTOR_ACCESS)))
+                        .requestMatchers(antMatcher(HttpMethod.POST, "/api/*/twofactor/validate")).fullyAuthenticated().anyRequest()
+                        .access(new WebExpressionAuthorizationManager(TWO_FACTOR_ACCESS)))
                 .addFilterAfter(basicAuthenticationProcessingFilter, SecurityContextHolderFilter.class)
                 .addFilterAfter(twoFactorAuthFilter, BasicAuthenticationFilter.class);
 

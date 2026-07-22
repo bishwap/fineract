@@ -18,14 +18,14 @@
  */
 package org.apache.fineract.infrastructure.codes.domain;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.fineract.infrastructure.codes.CodeConstants.CodevalueJSONinputParams;
 import org.apache.fineract.infrastructure.codes.data.CodeValueData;

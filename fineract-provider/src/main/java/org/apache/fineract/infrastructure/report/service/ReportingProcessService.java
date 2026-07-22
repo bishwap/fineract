@@ -18,11 +18,11 @@
  */
 package org.apache.fineract.infrastructure.report.service;
 
+import jakarta.ws.rs.core.MultivaluedMap;
+import jakarta.ws.rs.core.Response;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import jakarta.ws.rs.core.MultivaluedMap;
-import jakarta.ws.rs.core.Response;
 import org.apache.fineract.infrastructure.security.utils.SQLInjectionValidator;
 
 public interface ReportingProcessService {

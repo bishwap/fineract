@@ -19,12 +19,12 @@
 
 package org.apache.fineract.portfolio.client.domain;
 
-import java.util.Date;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
 import jakarta.persistence.Temporal;
 import jakarta.persistence.TemporalType;
+import java.util.Date;
 import org.apache.fineract.infrastructure.core.domain.AbstractPersistableCustom;
 
 @SuppressWarnings("serial")

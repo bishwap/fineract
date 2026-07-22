@@ -18,9 +18,6 @@
  */
 package org.apache.fineract.interoperation.domain;
 
-import jakarta.validation.constraints.NotNull;
-import java.util.Date;
-import java.util.Objects;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -31,6 +28,9 @@ import jakarta.persistence.Table;
 import jakarta.persistence.Temporal;
 import jakarta.persistence.TemporalType;
 import jakarta.persistence.UniqueConstraint;
+import jakarta.validation.constraints.NotNull;
+import java.util.Date;
+import java.util.Objects;
 import org.apache.fineract.infrastructure.core.domain.AbstractPersistableCustom;
 import org.apache.fineract.portfolio.savings.domain.SavingsAccount;
 

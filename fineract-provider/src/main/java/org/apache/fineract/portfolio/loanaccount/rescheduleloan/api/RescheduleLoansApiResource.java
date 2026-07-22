@@ -19,8 +19,6 @@
 package org.apache.fineract.portfolio.loanaccount.rescheduleloan.api;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
-import java.util.HashSet;
-import java.util.List;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
@@ -31,6 +29,8 @@ import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.UriInfo;
+import java.util.HashSet;
+import java.util.List;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.fineract.commands.domain.CommandWrapper;
 import org.apache.fineract.commands.service.CommandWrapperBuilder;

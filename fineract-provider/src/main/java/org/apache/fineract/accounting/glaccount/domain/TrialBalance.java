@@ -19,14 +19,14 @@
 
 package org.apache.fineract.accounting.glaccount.domain;
 
-import java.math.BigDecimal;
-import java.util.Date;
-import java.util.Objects;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
 import jakarta.persistence.Temporal;
 import jakarta.persistence.TemporalType;
+import java.math.BigDecimal;
+import java.util.Date;
+import java.util.Objects;
 import org.apache.fineract.infrastructure.core.domain.AbstractPersistableCustom;
 
 @Entity

@@ -18,9 +18,6 @@
  */
 package org.apache.fineract.infrastructure.core.domain;
 
-import java.time.Instant;
-import java.util.Date;
-import java.util.Optional;
 import jakarta.persistence.Column;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
@@ -28,6 +25,9 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.MappedSuperclass;
 import jakarta.persistence.Temporal;
 import jakarta.persistence.TemporalType;
+import java.time.Instant;
+import java.util.Date;
+import java.util.Optional;
 import org.apache.fineract.useradministration.domain.AppUser;
 import org.springframework.data.domain.Auditable;
 import org.springframework.data.jpa.domain.AbstractAuditable;

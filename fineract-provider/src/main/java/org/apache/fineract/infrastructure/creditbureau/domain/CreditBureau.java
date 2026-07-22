@@ -18,9 +18,9 @@
  */
 package org.apache.fineract.infrastructure.creditbureau.domain;
 
-import java.util.List;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
+import java.util.List;
 import org.apache.fineract.infrastructure.core.api.JsonCommand;
 import org.apache.fineract.infrastructure.core.domain.AbstractPersistableCustom;
 

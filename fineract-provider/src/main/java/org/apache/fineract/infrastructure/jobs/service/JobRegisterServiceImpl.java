@@ -19,6 +19,7 @@
 package org.apache.fineract.infrastructure.jobs.service;
 
 import com.google.common.base.Splitter;
+import jakarta.annotation.PostConstruct;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -27,7 +28,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.TimeZone;
-import jakarta.annotation.PostConstruct;
 import org.apache.fineract.infrastructure.core.domain.FineractPlatformTenant;
 import org.apache.fineract.infrastructure.core.exception.PlatformInternalServerException;
 import org.apache.fineract.infrastructure.core.service.ThreadLocalContextUtil;

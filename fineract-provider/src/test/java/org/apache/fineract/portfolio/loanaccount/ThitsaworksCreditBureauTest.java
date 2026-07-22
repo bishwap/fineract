@@ -23,12 +23,12 @@ import static org.mockito.Mockito.when;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
-import java.io.File;
 import jakarta.ws.rs.core.UriInfo;
+import java.io.File;
 import org.apache.fineract.infrastructure.core.serialization.FromJsonHelper;
 import org.apache.fineract.infrastructure.creditbureau.service.CreditReportWritePlatformServiceImpl;
 import org.apache.fineract.infrastructure.creditbureau.service.ThitsaWorksCreditBureauIntegrationWritePlatformServiceImpl;
+import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;

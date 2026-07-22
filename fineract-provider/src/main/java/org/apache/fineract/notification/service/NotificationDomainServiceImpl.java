@@ -18,13 +18,13 @@
  */
 package org.apache.fineract.notification.service;
 
+import jakarta.annotation.PostConstruct;
+import jakarta.jms.Queue;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import jakarta.annotation.PostConstruct;
-import jakarta.jms.Queue;
 import org.apache.activemq.command.ActiveMQQueue;
 import org.apache.fineract.infrastructure.core.data.CommandProcessingResult;
 import org.apache.fineract.infrastructure.core.service.ThreadLocalContextUtil;

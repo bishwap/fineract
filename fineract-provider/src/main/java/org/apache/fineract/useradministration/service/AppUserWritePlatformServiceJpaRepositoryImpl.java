@@ -20,12 +20,12 @@ package org.apache.fineract.useradministration.service;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
+import jakarta.persistence.PersistenceException;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import jakarta.persistence.PersistenceException;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.fineract.commands.service.CommandWrapperBuilder;
 import org.apache.fineract.infrastructure.core.api.JsonCommand;

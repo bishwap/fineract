@@ -18,11 +18,6 @@
  */
 package org.apache.fineract.organisation.teller.domain;
 
-import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.util.Date;
-import java.util.LinkedHashMap;
-import java.util.Map;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -32,6 +27,11 @@ import jakarta.persistence.Table;
 import jakarta.persistence.Temporal;
 import jakarta.persistence.TemporalType;
 import jakarta.persistence.Transient;
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.Date;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import org.apache.fineract.infrastructure.core.api.JsonCommand;
 import org.apache.fineract.infrastructure.core.domain.AbstractPersistableCustom;
 import org.apache.fineract.infrastructure.core.service.DateUtils;
