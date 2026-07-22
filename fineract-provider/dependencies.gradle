@@ -34,7 +34,9 @@ dependencies {
 
             'org.springframework:spring-jms',
             'org.springframework:spring-context-support',
-            'org.springframework.security.oauth:spring-security-oauth2',
+            // Legacy 'org.springframework.security.oauth:spring-security-oauth2' removed in Phase 6.
+            // Resource-server support for the (to-be-rebuilt) OAuth2 profile now comes from Boot 3:
+            'org.springframework.boot:spring-boot-starter-oauth2-resource-server',
 
             "org.glassfish.jersey.core:jersey-server:$jerseyVersion",
             "org.glassfish.jersey.containers:jersey-container-servlet:$jerseyVersion",

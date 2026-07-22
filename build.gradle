@@ -22,7 +22,8 @@ buildscript {
         jacocoVersion = '0.8.6'
         retrofitVersion = '2.9.0'
         okhttpVersion = '4.9.0'
-        oltuVersion = '1.0.1'
+        // oltuVersion removed in Phase 6: the legacy spring-security-oauth2 authorization-server it backed
+        // is gone in Spring Security 6. See UPGRADE-JAVA21-NOTES.md Phase 6.
         fineractJavaProjects = subprojects.findAll{
             [
                 'fineract-api',
@@ -106,7 +107,10 @@ allprojects  {
             // We do not use :+ to get the latest available version available on Maven Central, as that could suddenly break things.
             // We use the Renovate Bot to automatically propose Pull Requests (PRs) when upgrades for all of these versions are available.
 
-            dependency 'org.springframework.security.oauth:spring-security-oauth2:2.5.1.RELEASE'
+            // spring-security-oauth2 2.5.1.RELEASE removed in Phase 6 (end-of-life, incompatible with
+            // Spring Security 6). The OAuth2 authorization-server is a documented blocker; the resource
+            // server side is now provided by spring-boot-starter-oauth2-resource-server when re-enabled.
+            // See UPGRADE-JAVA21-NOTES.md Phase 6.
             dependency 'org.apache.openjpa:openjpa:4.0.0' // jakarta.persistence-based; when upgrading, also change OpenJPA version repeated above in buildscript!
             dependency 'com.google.guava:guava:30.1.1-jre'
             dependency 'com.google.code.gson:gson:2.8.6'
@@ -159,9 +163,6 @@ allprojects  {
             dependency "com.squareup.retrofit2:converter-scalars:$retrofitVersion"
             dependency "com.squareup.retrofit2:converter-gson:$retrofitVersion"
             dependency "com.squareup.retrofit2:converter-protobuf:$retrofitVersion"
-            dependency "org.apache.oltu.oauth2:org.apache.oltu.oauth2.common:$oltuVersion"
-            dependency "org.apache.oltu.oauth2:org.apache.oltu.oauth2.client:$oltuVersion"
-            dependency "org.apache.oltu.oauth2:org.apache.oltu.oauth2.httpclient4:$oltuVersion"
             dependency "com.squareup.okhttp3:okhttp:$okhttpVersion"
             dependency "com.squareup.okhttp3:okcurl:$okhttpVersion"
             dependency "com.squareup.okhttp3:logging-interceptor:$okhttpVersion"

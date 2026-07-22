@@ -283,3 +283,67 @@ jakarta-based). `project.ext.jerseyVersion` 1.19.4 -> **3.1.5**.
   `com.sun.jersey.core.util.MultivaluedMapImpl` -> standard `jakarta.ws.rs.core.MultivaluedHashMap`.
 
 No remaining `com.sun.jersey` references anywhere in `fineract-provider/src`.
+
+---
+
+## Phase 6 — OAuth2 / Spring Security 6
+
+**What was removed / why.** `spring-security-oauth:spring-security-oauth2:2.5.1.RELEASE` (and the Apache
+`oltu` client libraries it paired with) reached end-of-life and is **not compatible with Spring Security 6**;
+the entire `org.springframework.security.oauth2.provider.*` API, the `<oauth:authorization-server>` /
+`<oauth:resource-server>` XML namespace, `DefaultTokenServices`, `JdbcTokenStore`,
+`JdbcClientDetailsService`, `ClientCredentialsTokenEndpointFilter`, `ScopeVoter` and the
+`AccessDecisionManager`/voter authorization model are all gone. There is **no mechanical migration**.
+
+**Dependency changes:**
+- Removed `oltuVersion` and the three `org.apache.oltu.oauth2.*` dependencies (`build.gradle`).
+- Removed `spring-security-oauth2:2.5.1.RELEASE` from `dependencyManagement` (`build.gradle`).
+- Removed `org.springframework.security.oauth:spring-security-oauth2` from provider deps and added
+  `org.springframework.boot:spring-boot-starter-oauth2-resource-server` (`dependencies.gradle`) for the
+  eventual resource-server rebuild.
+
+**Security config rebuild (basicauth profile — DONE, review-required).** The legacy `securityContext.xml`
+used the pre-6 XML DSL (`<http use-expressions="true">`, `access-decision-manager-ref`, SpEL
+`access="…"`, `<custom-filter>` positions, `<authentication-manager>`), none of which is valid under
+Spring Security 6. It was **deleted** and its `<import>` removed from `appContext.xml`. The default
+`basicauth` profile is reimplemented in Java as
+`org.apache.fineract.infrastructure.core.boot.SecurityConfiguration` — a `@Profile("basicauth")`
+`SecurityFilterChain` that:
+- is `stateless`, CSRF-disabled, `requiresChannel(...).requiresSecure()` (HTTPS), matches `/api/**`;
+- `permitAll` for `echo`, `POST authentication`, `POST self/authentication`, `POST self/registration`,
+  `POST self/registration/user`; `fullyAuthenticated` for the `twofactor` endpoints; and
+  `isFullyAuthenticated() and hasAuthority('TWOFACTOR_AUTHENTICATED')` (via
+  `WebExpressionAuthorizationManager`) for everything else;
+- re-registers the existing custom filters `basicAuthenticationProcessingFilter`
+  (`TenantAwareBasicAuthenticationFilter`) after `SecurityContextHolderFilter` and `twoFactorAuthFilter`
+  after `BasicAuthenticationFilter`;
+- provides the `passwordEncoder` (delegating), `basicAuthenticationEntryPoint`,
+  `customAuthenticationProvider` (`DaoAuthenticationProvider`) and non-erasing
+  `AuthenticationManager` beans that the XML used to define.
+- Uses explicit `AntPathRequestMatcher.antMatcher(...)` for every rule so the matchers are unambiguous
+  under Jersey (Spring Security 6 otherwise defaults to MVC matchers).
+
+Also decoupled `TwoFactorAuthenticationFilter` from the removed `OAuth2Authentication` (it now returns a
+plain `UsernamePasswordAuthenticationToken` with the augmented authorities).
+
+**BLOCKER — the `oauth` authorization-server profile is NOT migrated.** Fineract's `oauth` profile ran a
+full self-hosted OAuth2 **authorization server** (password + refresh-token grants, JDBC client/token
+stores, a `/api/oauth/token` endpoint) on the dead `spring-security-oauth2` library. Rebuilding it is a
+design decision for the human reviewer, not a mechanical port. The OAuth2-only API classes that hard-depended
+on the removed API were removed to let the tree compile: `UserDetailsApiResource`(+Swagger),
+`SelfUserDetailsApiResource`(+Swagger) and `AuthenticatedOauthUserData`. `WebXmlOauthConfiguration` (the
+`/api/oauth/token` dispatcher, `@Profile("oauth")`) is left in place but will not function until the server
+is rebuilt.
+
+Options for the reviewer:
+1. **Spring Authorization Server** (`org.springframework.security:spring-security-oauth2-authorization-server`)
+   — the official successor; re-model clients as `RegisteredClient`, replace `JdbcClientDetailsService`/
+   `JdbcTokenStore` with its JDBC variants, and expose the token endpoint. Largest effort, closest to the
+   old feature set (custom grants like the old `password` grant are discouraged/removed in OAuth 2.1).
+2. **Resource-server only** (`spring-boot-starter-oauth2-resource-server`, already added) — if tokens are
+   issued by an external IdP (Keycloak/Auth0/…), Fineract only validates JWTs. Much smaller, but changes the
+   deployment model.
+3. **Drop OAuth2**, keep only `basicauth` — simplest; acceptable if the OAuth2 profile is unused.
+
+Until one is chosen, running with `-Dspring.profiles.active=oauth` is expected to fail; `basicauth`
+(the default) is the supported path in this branch.

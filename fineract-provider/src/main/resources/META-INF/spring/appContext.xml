@@ -53,7 +53,11 @@
 
     <import resource="infrastructure.xml" />
 
-    <import resource="securityContext.xml" />
+    <!-- securityContext.xml removed in Phase 6: the legacy Spring Security XML DSL and
+         spring-security-oauth2 authorization-server it contained are gone in Spring Security 6.
+         The basicauth profile is now configured in
+         org.apache.fineract.infrastructure.core.boot.SecurityConfiguration (Java). The oauth profile
+         is a documented blocker. See UPGRADE-JAVA21-NOTES.md Phase 6. -->
 
     <import resource="cache.xml" />
 
