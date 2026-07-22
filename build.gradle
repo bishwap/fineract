@@ -38,29 +38,29 @@ buildscript {
         }
     }
     repositories {
-        jcenter()
+        mavenCentral()
         maven { url "https://plugins.gradle.org/m2/" }
     }
 
     dependencies {
         classpath 'com.bmuschko:gradle-cargo-plugin:2.8.0'
-        classpath 'org.apache.openjpa:openjpa:3.2.0' // when upgrading, also change OpenJPA version repeated in fineract-provider/build.gradle!
-        classpath 'com.radcortez.gradle:openjpa-gradle-plugin:3.1.0'
-        classpath 'gradle.plugin.com.github.spotbugs.snom:spotbugs-gradle-plugin:4.7.1'
-        classpath 'gradle.plugin.com.github.andygoossens:gradle-modernizer-plugin:1.3.0'
+        classpath 'org.apache.openjpa:openjpa:3.2.0' // when upgrading, also change OpenJPA version repeated in fineract-provider/build.gradle! See UPGRADE-JAVA21-NOTES.md Phase 4.
+        classpath 'com.radcortez.gradle:openjpa-gradle-plugin:3.1.0' // BLOCKER: no jakarta-capable release; see UPGRADE-JAVA21-NOTES.md Phase 4.
+        classpath 'com.github.spotbugs.snom:spotbugs-gradle-plugin:6.0.18'
+        classpath 'com.github.andygoossens:gradle-modernizer-plugin:1.9.2'
     }
 }
 
 plugins {
-    id 'io.spring.dependency-management' version '1.0.11.RELEASE'
-    id 'com.diffplug.spotless' version '5.12.5' apply false
-    id 'org.nosphere.apache.rat' version '0.7.0' apply false
-    id 'com.github.hierynomus.license' version '0.15.0' apply false
-    id 'org.openapi.generator' version '4.3.1' apply false
+    id 'io.spring.dependency-management' version '1.1.4'
+    id 'com.diffplug.spotless' version '6.25.0' apply false
+    id 'org.nosphere.apache.rat' version '0.8.1' apply false
+    id 'com.github.hierynomus.license' version '0.16.1' apply false
+    id 'org.openapi.generator' version '6.6.0' apply false
     id 'org.zeroturnaround.gradle.jrebel' version '1.1.10' apply false
-    id 'org.springframework.boot' version '2.3.5.RELEASE' apply false
-    id 'net.ltgt.errorprone' version '2.0.1' apply false
-    id 'io.swagger.core.v3.swagger-gradle-plugin' version '2.1.9' apply false
+    id 'org.springframework.boot' version '3.2.5' apply false
+    id 'net.ltgt.errorprone' version '3.1.0' apply false
+    id 'io.swagger.core.v3.swagger-gradle-plugin' version '2.2.20' apply false
     id 'com.gorylenko.gradle-git-properties' version '2.2.4' apply false
     id 'org.asciidoctor.jvm.convert' version '3.3.2' apply false
     id 'org.asciidoctor.jvm.pdf' version '3.3.2' apply false
@@ -82,7 +82,7 @@ allprojects  {
     group = 'org.apache.fineract'
 
     repositories {
-        jcenter()
+        mavenCentral()
     }
 
     apply plugin: 'io.spring.dependency-management'
@@ -365,9 +365,9 @@ configure(project.fineractJavaProjects) {
     apply plugin: 'com.github.andygoossens.gradle-modernizer-plugin'
 
     /* define the valid syntax level for source files */
-    sourceCompatibility = JavaVersion.VERSION_11
+    sourceCompatibility = JavaVersion.VERSION_21
     /* define binary compatibility version */
-    targetCompatibility = JavaVersion.VERSION_11
+    targetCompatibility = JavaVersion.VERSION_21
 
     /* http://stackoverflow.com/questions/19653311/jpa-repository-works-in-idea-and-production-but-not-in-gradle */
     sourceSets.main.output.resourcesDir = sourceSets.main.java.outputDir
@@ -485,21 +485,21 @@ configure(project.fineractJavaProjects) {
     // https://www.eclemma.org/jacoco/
     jacoco {
         toolVersion = jacocoVersion
-        reportsDir = file("$buildDir/reports/jacoco")
+        reportsDirectory = file("$buildDir/reports/jacoco")
     }
 
     jacocoTestReport {
         reports {
-            html.enabled=true
-            xml.enabled=true
-            html.destination file("${buildDir}/code-coverage")
+            html.required = true
+            xml.required = true
+            html.outputLocation = file("${buildDir}/code-coverage")
         }
     }
 
     // Configuration for the errorprone plugin
     // https://github.com/tbroyer/gradle-errorprone-plugin
     dependencies {
-        errorprone "com.google.errorprone:error_prone_core:2.6.0"
+        errorprone "com.google.errorprone:error_prone_core:2.28.0"
     }
 
     tasks.withType(JavaCompile) {
@@ -648,7 +648,7 @@ configure(project.fineractJavaProjects) {
 }
 
 configure(project.fineractPublishProjects) {
-    apply plugin: 'maven'
+    // The legacy 'maven' plugin was removed in Gradle 7; only 'maven-publish' remains. See UPGRADE-JAVA21-NOTES.md Phase 1.
     apply plugin: 'maven-publish'
 
     publishing {

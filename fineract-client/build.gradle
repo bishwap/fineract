@@ -93,9 +93,11 @@ sourceSets {
 }
 
 java {
-    // keep this at Java 8, not 11; see https://issues.apache.org/jira/browse/FINERACT-1214
-    sourceCompatibility = JavaVersion.VERSION_1_8
-    targetCompatibility = JavaVersion.VERSION_1_8
+    // FINERACT-1214 previously pinned this module to Java 8. Per the supervised Java 21 "full
+    // migration" decision this override is lifted and the module is raised to Java 21 to match the
+    // rest of the build. See UPGRADE-JAVA21-NOTES.md Phase 1.
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
 }
 
 compileJava {
