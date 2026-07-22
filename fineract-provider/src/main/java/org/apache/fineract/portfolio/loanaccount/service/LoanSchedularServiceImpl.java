@@ -24,12 +24,12 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.ThreadLocalRandom;
 import org.apache.fineract.infrastructure.configuration.domain.ConfigurationDomainService;
 import org.apache.fineract.infrastructure.core.data.ApiParameterError;
 import org.apache.fineract.infrastructure.core.exception.AbstractPlatformDomainRuleException;
@@ -150,8 +150,7 @@ public class LoanSchedularServiceImpl implements LoanSchedularService {
                         // Else sleep for a random time (between 1 to 10
                         // seconds) and continue
                         try {
-                            Random random = new Random();
-                            int randomNum = random.nextInt(maxIntervalBetweenRetries + 1);
+                            int randomNum = ThreadLocalRandom.current().nextInt(maxIntervalBetweenRetries + 1);
                             Thread.sleep(1000 + (randomNum * 1000));
                             numberOfRetries = numberOfRetries + 1;
                         } catch (InterruptedException e) {

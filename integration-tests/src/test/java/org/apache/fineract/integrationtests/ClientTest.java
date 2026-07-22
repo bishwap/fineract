@@ -27,7 +27,7 @@ import io.restassured.specification.RequestSpecification;
 import io.restassured.specification.ResponseSpecification;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Random;
+import java.util.concurrent.ThreadLocalRandom;
 import org.apache.fineract.integrationtests.common.ClientHelper;
 import org.apache.fineract.integrationtests.common.Utils;
 import org.junit.jupiter.api.Assertions;
@@ -149,11 +149,10 @@ public class ClientTest {
     @Test
     public void testPendingOnlyClientRequest() {
 
-        Random rand = new Random();
         // Add a few clients to the server and activate a random amount of them
         for (int i = 0; i < 15; i++) {
             final Integer clientId = ClientHelper.createClientAsEntity(this.requestSpec, this.responseSpec);
-            if (rand.nextInt(10) % 2 == 0) {
+            if (ThreadLocalRandom.current().nextInt(10) % 2 == 0) {
                 // Takes Client to pending status
                 this.clientHelper.closeClient(clientId);
                 this.clientHelper.reactivateClient(clientId);

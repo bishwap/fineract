@@ -22,7 +22,7 @@ import com.google.gson.Gson;
 import io.restassured.specification.RequestSpecification;
 import io.restassured.specification.ResponseSpecification;
 import java.util.HashMap;
-import java.util.Random;
+import java.util.concurrent.ThreadLocalRandom;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,7 +53,7 @@ public final class WorkingDaysHelper {
         final HashMap<String, Object> map = new HashMap<>();
         map.put("recurrence", "FREQ=WEEKLY;INTERVAL=1;BYDAY=MO,TU,WE,TH,FR,SA,SU");
         map.put("locale", "en");
-        map.put("repaymentRescheduleType", new Random().nextInt(4) + 1);
+        map.put("repaymentRescheduleType", ThreadLocalRandom.current().nextInt(4) + 1);
         map.put("extendTermForDailyRepayments", false);
         LOG.info("map :  {}", map);
         return new Gson().toJson(map);
@@ -63,7 +63,7 @@ public final class WorkingDaysHelper {
         final HashMap<String, Object> map = new HashMap<>();
         map.put("recurrence", "FREQ=WEEKLY;INTERVAL=1;BYDAY=MP,TI,TE,TH");
         map.put("locale", "en");
-        map.put("repaymentRescheduleType", new Random().nextInt(4) + 1);
+        map.put("repaymentRescheduleType", ThreadLocalRandom.current().nextInt(4) + 1);
         map.put("extendTermForDailyRepayments", false);
         LOG.info("map :  {}", map);
         return new Gson().toJson(map);

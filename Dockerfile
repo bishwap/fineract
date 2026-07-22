@@ -15,7 +15,7 @@
 # specific language governing permissions and limitations
 # under the License.
 #
-FROM openjdk:11 AS builder
+FROM eclipse-temurin:17-jdk AS builder
 
 RUN apt-get update -qq && apt-get install -y wget
 
@@ -34,11 +34,26 @@ RUN wget -q https://repo1.maven.org/maven2/mysql/mysql-connector-java/8.0.23/mys
 
 # =========================================
 
-FROM gcr.io/distroless/java:11 as fineract
+FROM gcr.io/distroless/java17-debian11 as fineract
 
 COPY --from=builder /fineract/fineract-provider/build/libs /app
 COPY --from=builder /fineract/libs /app/libs
 
 WORKDIR /app
 
-ENTRYPOINT ["java", "-Dloader.path=/app/libs/", "-jar", "/app/fineract-provider.jar"]
+# JDK 17 strong encapsulation: OpenJPA and the Gson/reflection-based (de)serializers reach into
+# java.base internals (notably java.time) at runtime, so the production JVM needs the same
+# --add-opens set that gradle.properties / ext.jdk17RuntimeJvmArgs apply to the build and test/bootRun JVMs.
+ENTRYPOINT ["java", \
+    "--add-opens", "java.base/java.lang=ALL-UNNAMED", \
+    "--add-opens", "java.base/java.lang.reflect=ALL-UNNAMED", \
+    "--add-opens", "java.base/java.util=ALL-UNNAMED", \
+    "--add-opens", "java.base/java.io=ALL-UNNAMED", \
+    "--add-opens", "java.base/java.net=ALL-UNNAMED", \
+    "--add-opens", "java.base/java.security=ALL-UNNAMED", \
+    "--add-opens", "java.base/java.text=ALL-UNNAMED", \
+    "--add-opens", "java.base/java.math=ALL-UNNAMED", \
+    "--add-opens", "java.base/java.time=ALL-UNNAMED", \
+    "--add-opens", "java.base/sun.nio.ch=ALL-UNNAMED", \
+    "--add-opens", "java.sql/java.sql=ALL-UNNAMED", \
+    "-Dloader.path=/app/libs/", "-jar", "/app/fineract-provider.jar"]
