@@ -20,8 +20,8 @@ package org.apache.fineract.portfolio.rate.service;
 
 import static org.apache.fineract.portfolio.rate.api.RateApiConstants.approveUserIdParamName;
 
+import jakarta.persistence.PersistenceException;
 import java.util.Map;
-import javax.persistence.PersistenceException;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.fineract.infrastructure.core.api.JsonCommand;
 import org.apache.fineract.infrastructure.core.data.CommandProcessingResult;

@@ -18,9 +18,9 @@
  */
 package org.apache.fineract.batch;
 
+import jakarta.ws.rs.core.UriInfo;
 import java.util.ArrayList;
 import java.util.List;
-import javax.ws.rs.core.UriInfo;
 import org.apache.fineract.batch.domain.BatchRequest;
 import org.apache.fineract.batch.domain.BatchResponse;
 import org.apache.fineract.batch.service.BatchApiService;

@@ -57,7 +57,7 @@ public class ClientTest extends IntegrationTest {
         // https://issues.apache.org/jira/browse/FINERACT-1233
         return (long) ok(fineract().clients
                 .create6(new PostClientsRequest().officeId(1).fullname("TestClient").dateFormat(dateFormat()).locale("en_US")))
-                        .getClientId();
+                .getClientId();
     }
 
     Optional<Long> retrieveFirst() {

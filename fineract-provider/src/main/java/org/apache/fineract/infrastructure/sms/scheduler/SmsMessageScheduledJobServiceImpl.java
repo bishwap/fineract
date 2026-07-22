@@ -19,6 +19,7 @@
 package org.apache.fineract.infrastructure.sms.scheduler;
 
 import com.google.gson.Gson;
+import jakarta.annotation.PostConstruct;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -27,7 +28,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import javax.annotation.PostConstruct;
 import org.apache.fineract.infrastructure.campaigns.helper.SmsConfigUtils;
 import org.apache.fineract.infrastructure.campaigns.sms.constants.SmsCampaignConstants;
 import org.apache.fineract.infrastructure.campaigns.sms.domain.SmsCampaign;
@@ -180,7 +180,7 @@ public class SmsMessageScheduledJobServiceImpl implements SmsMessageScheduledJob
         if (responseOne != null) {
             // String smsResponse = responseOne.getBody();
             if (!responseOne.getStatusCode().equals(HttpStatus.ACCEPTED)) {
-                LOG.debug("{}", responseOne.getStatusCode().name());
+                LOG.debug("{}", responseOne.getStatusCode());
                 throw new ConnectionFailureException(SmsCampaignConstants.SMS);
             }
         }

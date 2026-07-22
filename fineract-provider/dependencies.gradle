@@ -34,17 +34,20 @@ dependencies {
 
             'org.springframework:spring-jms',
             'org.springframework:spring-context-support',
-            'org.springframework.security.oauth:spring-security-oauth2',
+            // Legacy 'org.springframework.security.oauth:spring-security-oauth2' removed in Phase 6.
+            // Resource-server support for the (to-be-rebuilt) OAuth2 profile now comes from Boot 3:
+            'org.springframework.boot:spring-boot-starter-oauth2-resource-server',
 
-            'com.sun.jersey:jersey-servlet',
-            'com.sun.jersey:jersey-server',
-            'com.sun.jersey:jersey-json',
-            'com.sun.jersey.contribs:jersey-spring',
-            'com.sun.jersey.contribs:jersey-multipart',
+            "org.glassfish.jersey.core:jersey-server:$jerseyVersion",
+            "org.glassfish.jersey.containers:jersey-container-servlet:$jerseyVersion",
+            "org.glassfish.jersey.containers:jersey-container-servlet-core:$jerseyVersion",
+            "org.glassfish.jersey.media:jersey-media-multipart:$jerseyVersion",
+            "org.glassfish.jersey.media:jersey-media-json-jackson:$jerseyVersion",
+            "org.glassfish.jersey.ext:jersey-spring6:$jerseyVersion",
+            "org.glassfish.jersey.inject:jersey-hk2:$jerseyVersion",
 
             'com.google.guava:guava',
             'com.google.code.gson:gson',
-            'com.sun.jersey:jersey-core',
             'jakarta.jms:jakarta.jms-api',
             'jakarta.management.j2ee:jakarta.management.j2ee-api',
             'jakarta.validation:jakarta.validation-api',
@@ -74,11 +77,20 @@ dependencies {
 
             'com.github.spotbugs:spotbugs-annotations',
             'io.swagger.core.v3:swagger-annotations',
+            // The Swagger gradle :resolve task instantiates io.swagger.v3.jaxrs2.Reader from the project's
+            // runtimeClasspath to scan JAX-RS resources into the OpenAPI spec. After the Jersey 3 migration the
+            // resources are jakarta.ws.rs; the -jakarta reader variant is required or the spec (and the generated
+            // fineract-client SDK) comes out empty. See UPGRADE-JAVA21-NOTES.md Phase 8.
+            'io.swagger.core.v3:swagger-jaxrs2-jakarta:2.2.20',
             'org.webjars:webjars-locator-core',
 
             'com.google.cloud.sql:mysql-socket-factory-connector-j-8:1.2.3',
             'com.squareup.retrofit2:converter-gson',
-            'com.sun.activation:jakarta.activation:1.2.2'
+            'com.sun.activation:jakarta.activation:1.2.2',
+            // Legacy Jackson 1.x, still referenced by template/interop/campaign classes (Phase 8 tech-debt).
+            'org.codehaus.jackson:jackson-mapper-asl',
+            // Provides jakarta.mail(.internet).* for the email/report-mailing services (Jakarta Mail 2.1).
+            'org.springframework.boot:spring-boot-starter-mail'
             )
     implementation ('jakarta.xml.bind:jakarta.xml.bind-api') {
         exclude group: 'jakarta.activation'
@@ -133,5 +145,4 @@ dependencies {
         exclude group: 'jakarta.activation'
         exclude group: 'javax.activation'
     }
-
 }

@@ -176,8 +176,8 @@ war {
 }
 
 /* http://stackoverflow.com/questions/19653311/jpa-repository-works-in-idea-and-production-but-not-in-gradle */
-sourceSets.main.output.resourcesDir = sourceSets.main.java.outputDir
-sourceSets.test.output.resourcesDir = sourceSets.test.java.outputDir
+sourceSets.main.output.resourcesDir = sourceSets.main.java.destinationDirectory.get().asFile
+sourceSets.test.output.resourcesDir = sourceSets.test.java.destinationDirectory.get().asFile
 
 /* Exclude maria db related files for non dev builds */
 if (!(project.hasProperty('env') && project.getProperty('env') == 'dev')) {
@@ -245,7 +245,7 @@ bootRun {
 }
 
 springBoot {
-    mainClassName = 'org.apache.fineract.ServerApplication'
+    mainClass = 'org.apache.fineract.ServerApplication'
 }
 
 bootJar {
@@ -255,18 +255,39 @@ bootJar {
     }
 }
 
+// The Swagger 'resolve' task writes the generated OpenAPI spec into build/classes/java/main
+// (via compileJava.finalizedBy resolve). Spring Boot's resolveMainClassName / bootJar consume that
+// same directory, so under Gradle 8's strict task-dependency validation they must declare an explicit
+// dependency on 'resolve'. See UPGRADE-JAVA21-NOTES.md Phase 8.
+tasks.named('resolveMainClassName') {
+    dependsOn 'resolve'
+}
+bootJar {
+    dependsOn 'resolve'
+}
+// checkstyle/spotbugs read build/classes/java/main as input; 'resolve' writes into it, so they need the
+// same explicit dependency under Gradle 8. See UPGRADE-JAVA21-NOTES.md Phase 8.
+tasks.matching {
+    it.name in [
+        'checkstyleMain',
+        'spotbugsMain'
+    ]
+}.configureEach {
+    dependsOn 'resolve'
+}
+
 bootWar {
     enabled = false
 }
 
 tasks.withType(Tar) {
     compression Compression.GZIP
-    extension 'tar.gz'
+    archiveExtension = 'tar.gz'
 }
 
 distributions {
     binary {
-        baseName "apache-fineract-$releaseVersion-binary"
+        distributionBaseName = "apache-fineract-$releaseVersion-binary"
         contents {
             from bootJar
             from war
@@ -284,7 +305,7 @@ distributions {
         }
     }
     src {
-        baseName "apache-fineract-$releaseVersion-src"
+        distributionBaseName = "apache-fineract-$releaseVersion-src"
         contents {
             from "$rootDir/"
             exclude '**/build' , '.git', '.gradle', '.github', '.settings', '.project', '.classpath', '.idea', 'out', '._.DS_Store', '.DS_Store', 'WebContent', '.externalToolbuilders', '.theia', '.gitpod.yml', '.travis.yml', 'LICENSE_RELEASE', 'NOTICE_RELEASE', '**/licenses/binary'
@@ -294,8 +315,8 @@ distributions {
     }
 }
 
-tasks.binaryDistZip.enabled false
-tasks.srcDistZip.enabled false
+tasks.binaryDistZip.enabled = false
+tasks.srcDistZip.enabled = false
 
 // create signatures and checksums only if project parameter "fineract.release" is provided on the command line
 if( project.hasProperty("fineract.release") ) {
@@ -333,7 +354,7 @@ if( project.hasProperty("fineract.release") ) {
 // Configuration for git properties gradle plugin
 // https://github.com/n0mer/gradle-git-properties
 gitProperties {
-    gitPropertiesResourceDir = "$buildDir/classes/java/main/resources"
+    gitPropertiesResourceDir = file("$buildDir/classes/java/main/resources")
     dateFormat = "yyyy-MM-dd'T'HH:mmZ"
     dateFormatTimeZone = "GMT"
     failOnNoGitDirectory = false

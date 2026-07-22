@@ -18,6 +18,7 @@
  */
 package org.apache.fineract.portfolio.group.service;
 
+import jakarta.persistence.PersistenceException;
 import java.time.LocalDate;
 import java.util.Collection;
 import java.util.Date;
@@ -27,7 +28,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import javax.persistence.PersistenceException;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.fineract.commands.domain.CommandWrapper;
 import org.apache.fineract.commands.service.CommandProcessingService;

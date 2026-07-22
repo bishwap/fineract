@@ -18,15 +18,15 @@
  */
 package org.apache.fineract.infrastructure.security.filter;
 
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.ServletResponse;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import javax.servlet.FilterChain;
-import javax.servlet.ServletException;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import org.apache.fineract.infrastructure.security.constants.TwoFactorConstants;
 import org.apache.fineract.infrastructure.security.domain.TFAccessToken;
 import org.apache.fineract.infrastructure.security.service.TwoFactorService;
@@ -39,7 +39,6 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.oauth2.provider.OAuth2Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.web.filter.GenericFilterBean;
 
@@ -113,18 +112,14 @@ public class TwoFactorAuthenticationFilter extends GenericFilterBean {
         chain.doFilter(req, res);
     }
 
-    @SuppressWarnings("deprecation") // TODO FINERACT-1012
     private Authentication createUpdatedAuthentication(final Authentication currentAuthentication,
             final List<GrantedAuthority> updatedAuthorities) {
 
-        final UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-                currentAuthentication.getPrincipal(), currentAuthentication.getCredentials(), updatedAuthorities);
-
-        if (currentAuthentication instanceof OAuth2Authentication) {
-            final OAuth2Authentication oAuth2Authentication = (OAuth2Authentication) currentAuthentication;
-            return new OAuth2Authentication(oAuth2Authentication.getOAuth2Request(), authentication);
-        }
-
-        return authentication;
+        // Phase 6: the former OAuth2Authentication wrapping (spring-security-oauth2) was removed with that
+        // end-of-life library. Under Spring Security 6 the granted-authority augmentation is carried by a
+        // standard UsernamePasswordAuthenticationToken. When the OAuth2 profile is rebuilt on Spring
+        // Authorization Server this is where a JwtAuthenticationToken re-wrap would go. See NOTES Phase 6.
+        return new UsernamePasswordAuthenticationToken(currentAuthentication.getPrincipal(), currentAuthentication.getCredentials(),
+                updatedAuthorities);
     }
 }

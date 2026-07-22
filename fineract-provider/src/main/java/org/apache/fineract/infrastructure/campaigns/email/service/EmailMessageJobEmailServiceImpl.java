@@ -18,11 +18,11 @@
  */
 package org.apache.fineract.infrastructure.campaigns.email.service;
 
+import jakarta.mail.MessagingException;
+import jakarta.mail.internet.MimeMessage;
 import java.io.File;
 import java.util.List;
 import java.util.Properties;
-import javax.mail.MessagingException;
-import javax.mail.internet.MimeMessage;
 import org.apache.fineract.infrastructure.campaigns.email.EmailApiConstants;
 import org.apache.fineract.infrastructure.campaigns.email.data.EmailMessageWithAttachmentData;
 import org.apache.fineract.infrastructure.campaigns.email.domain.EmailConfiguration;
