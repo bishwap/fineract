@@ -27,6 +27,7 @@ attempt to make the application compile/run on Java 21.
 | `gradle/wrapper/gradle-wrapper.properties` | `gradle-6.9-bin.zip` → `gradle-8.7-bin.zip` | Gradle 6.9 cannot run on / target Java 21. Gradle 8.5+ is required for Java 21; 8.7 chosen. |
 | `Dockerfile` | builder `FROM openjdk:11` → `FROM eclipse-temurin:21`; runtime `FROM gcr.io/distroless/java:11` → `FROM gcr.io/distroless/java21-debian12` | Build and run the container on a Java 21 JDK/JRE. `openjdk:11` and `distroless/java:11` have no Java 21 tag; `eclipse-temurin:21` and `distroless/java21-debian12` are the current equivalents. |
 | `.travis.yml` (`before_install`) | `openjdk-11-jdk-headless` → `openjdk-21-jdk-headless`; `JAVA_HOME=.../java-11-openjdk-amd64` → `.../java-21-openjdk-amd64`; comment updated | CI must install and export a Java 21 JDK. |
+| `.travis.yml` | `dist: bionic` → `dist: jammy` | Ubuntu 18.04 (`bionic`) apt archives have no `openjdk-21` package, so `apt-get install openjdk-21-jdk-headless` would abort in `before_install` and mask the real build failure. Ubuntu 22.04 (`jammy`) provides `openjdk-21-jdk-headless`. |
 
 ### Deliberately NOT changed
 

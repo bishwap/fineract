@@ -19,7 +19,7 @@
 # https://docs.travis-ci.com/user/reference/linux/
 # Must use a fixed distribution (and remember to occassionally upgrade..)
 # to avoid surprise changes such as https://issues.apache.org/jira/browse/FINERACT-763
-dist: bionic
+dist: jammy
 
 language: generic
 
