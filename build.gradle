@@ -21,7 +21,7 @@ buildscript {
     ext {
         jacocoVersion = '0.8.6'
         retrofitVersion = '2.9.0'
-        okhttpVersion = '4.9.0'
+        okhttpVersion = '4.9.3' // CVE-2021-0341 (okhttp <4.9.2 hostname verification); stays on the Kotlin-1.4 compatible 4.9.x line
         oltuVersion = '1.0.1'
         fineractJavaProjects = subprojects.findAll{
             [
@@ -38,16 +38,27 @@ buildscript {
         }
     }
     repositories {
-        jcenter()
+        mavenCentral()
         maven { url "https://plugins.gradle.org/m2/" }
     }
 
     dependencies {
         classpath 'com.bmuschko:gradle-cargo-plugin:2.8.0'
         classpath 'org.apache.openjpa:openjpa:3.2.0' // when upgrading, also change OpenJPA version repeated in fineract-provider/build.gradle!
-        classpath 'com.radcortez.gradle:openjpa-gradle-plugin:3.1.0'
+        classpath 'com.radcortez.gradle:openjpa-gradle-plugin:3.1.1'
         classpath 'gradle.plugin.com.github.spotbugs.snom:spotbugs-gradle-plugin:4.7.1'
         classpath 'gradle.plugin.com.github.andygoossens:gradle-modernizer-plugin:1.3.0'
+    }
+
+    // JCenter (Bintray) was shut down in 2021 and no longer serves artifacts, so the build
+    // classpath is resolved from Maven Central instead. A couple of build-plugin transitive
+    // dependencies were only ever published to JCenter; substitute the nearest equivalents
+    // that are available on Maven Central. Build-time only; no shipped artifact is affected.
+    configurations.classpath.resolutionStrategy {
+        force 'org.ajoberstar.grgit:grgit-core:4.1.1'
+        dependencySubstitution {
+            substitute module('com.burgstaller:okhttp-digest') using module('io.github.rburgst:okhttp-digest:1.21')
+        }
     }
 }
 
@@ -75,17 +86,33 @@ Run as:
 gradle clean bootRun'''
 
 project.ext.jerseyVersion = '1.19.4'
-ext['groovy.version'] = '3.0.6'
+ext['groovy.version'] = '3.0.9' // CVE-2020-17521 (Groovy insecure temp dir); stays on the 3.0.x line
 ext['swaggerFile'] = "$rootDir/fineract-provider/build/classes/java/main/static/swagger-ui/fineract.yaml".toString()
 
 allprojects  {
     group = 'org.apache.fineract'
 
     repositories {
-        jcenter()
+        mavenCentral()
     }
 
     apply plugin: 'io.spring.dependency-management'
+
+    // ---------------------------------------------------------------------------
+    // CVE remediation for dependency versions governed by the Spring Boot BOM.
+    // The Spring Boot dependencies BOM is imported last below, so it (not the
+    // spring-framework-bom) governs the effective version of these families. The
+    // io.spring.dependency-management plugin resolves the BOM's version properties
+    // from project properties, so overriding them here is what actually takes effect.
+    // Every value stays within a Java-11-compatible line that Spring Boot 2.3.x supports.
+    ext['spring-framework.version'] = '5.2.25.RELEASE'  // CVE-2022-22965 "Spring4Shell", CVE-2022-22950, CVE-2023-20860/20861 (terminal 5.2.x)
+    ext['spring-security.version'] = '5.3.13.RELEASE'   // CVE-2021-22112, CVE-2021-22119, CVE-2020-5408 (terminal 5.3.x)
+    ext['tomcat.version'] = '9.0.120'                   // CVE-2025-24813 (RCE), CVE-2024-50379, request smuggling & DoS (terminal 9.0.x)
+    ext['jackson-bom.version'] = '2.12.7'               // aligns jackson-core/annotations/datatypes with the patched databind pinned below
+    ext['snakeyaml.version'] = '1.33'                   // CVE-2022-25857, CVE-2022-38749..38752, CVE-2022-41854 (terminal 1.x)
+    ext['logback.version'] = '1.2.13'                   // CVE-2021-42550, CVE-2023-6378, CVE-2023-6481 (terminal 1.2.x)
+    ext['activemq.version'] = '5.16.7'                  // CVE-2023-46604 (OpenWire RCE), CVE-2022-41678 (terminal 5.16.x) - aligns activemq-client/openwire with activemq-broker
+
     apply plugin: 'com.diffplug.spotless'
     apply plugin: 'com.github.hierynomus.license'
     apply plugin: 'org.nosphere.apache.rat'
@@ -95,8 +122,8 @@ allprojects  {
     // https://github.com/spring-gradle-plugins/dependency-management-plugin
     dependencyManagement {
         imports {
-            mavenBom 'org.springframework:spring-framework-bom:5.3.7'
-            mavenBom 'org.springframework.boot:spring-boot-dependencies:2.3.5.RELEASE'
+            mavenBom 'org.springframework:spring-framework-bom:5.2.25.RELEASE'
+            mavenBom 'org.springframework.boot:spring-boot-dependencies:2.3.12.RELEASE'
             mavenBom 'org.junit:junit-bom:5.7.2'
         }
 
@@ -105,34 +132,48 @@ allprojects  {
             // We do not use :+ to get the latest available version available on Maven Central, as that could suddenly break things.
             // We use the Renovate Bot to automatically propose Pull Requests (PRs) when upgrades for all of these versions are available.
 
-            dependency 'org.springframework.security.oauth:spring-security-oauth2:2.5.1.RELEASE'
+            // CVE remediation: explicit pins that override BOM-managed transitive versions.
+            // Each stays on a Java-11-compatible line and uses the smallest bump that clears the CVE(s).
+            dependency 'com.fasterxml.jackson.core:jackson-databind:2.12.7.1' // CVE-2020-36518, CVE-2022-42003, CVE-2022-42004 (security patch release on the 2.12 line)
+            dependency 'org.apache.commons:commons-compress:1.26.2'          // CVE-2021-35515/35516/35517/36090, CVE-2024-25710, CVE-2024-26308 (transitive via tika/poi)
+            dependency 'org.codehaus.jettison:jettison:1.5.4'                // CVE-2022-40149, CVE-2022-40150, CVE-2023-1436 (transitive)
+            dependency 'net.minidev:json-smart:2.4.10'                       // CVE-2021-27568, CVE-2023-1370 (transitive via json-path)
+            dependencySet(group: 'org.jetbrains.kotlin', version: '1.6.21') {
+                // CVE-2020-29582, CVE-2022-24329 (transitive via okhttp)
+                entry 'kotlin-stdlib'
+                entry 'kotlin-stdlib-common'
+                entry 'kotlin-stdlib-jdk7'
+                entry 'kotlin-stdlib-jdk8'
+            }
+
+            dependency 'org.springframework.security.oauth:spring-security-oauth2:2.5.2.RELEASE' // CVE-2022-22969 (DoS)
             dependency 'org.apache.openjpa:openjpa:3.2.0' // when upgrading, also change OpenJPA version repeated above in buildscript!
-            dependency 'com.google.guava:guava:30.1.1-jre'
-            dependency 'com.google.code.gson:gson:2.8.6'
+            dependency 'com.google.guava:guava:30.1.1-jre' // left as-is: guava 32.x fixes low-severity CVE-2020-8908/CVE-2023-2976 but its Gradle Module Metadata jre/android variants are ambiguous under the Gradle 6.9 wrapper (see PR notes)
+            dependency 'com.google.code.gson:gson:2.8.9' // CVE-2022-25647 (deserialization)
             dependency 'com.google.truth:truth:1.1.2'
             dependency 'com.google.truth.extensions:truth-java8-extension:1.1.2'
             dependency 'org.apache.commons:commons-email:1.5'
-            dependency 'commons-io:commons-io:2.8.0'
+            dependency 'commons-io:commons-io:2.14.0' // CVE-2024-47554 (uncontrolled resource consumption)
             dependency 'org.drizzle.jdbc:drizzle-jdbc:1.4'
             dependency 'com.github.librepdf:openpdf:1.3.26'
             dependency 'org.mnode.ical4j:ical4j:3.0.25'
             dependency 'org.quartz-scheduler:quartz:2.3.2'
-            dependency 'com.amazonaws:aws-java-sdk-s3:1.11.1011'
+            dependency 'com.amazonaws:aws-java-sdk-s3:1.12.797' // CVE-2022-31159 (S3 TransferManager path traversal); stays on the 1.x SDK line
             dependency 'org.ehcache:ehcache:3.9.3'
             dependency 'com.github.spullara.mustache.java:compiler:0.9.7'
-            dependency 'com.jayway.jsonpath:json-path:2.5.0'
-            dependency 'org.apache.tika:tika-core:1.26'
-            dependency 'org.apache.httpcomponents:httpclient:4.5.13'
+            dependency 'com.jayway.jsonpath:json-path:2.9.0' // CVE-2023-51074 (stack overflow)
+            dependency 'org.apache.tika:tika-core:1.28.5' // CVE-2021-28657, CVE-2022-30126, CVE-2022-30973, CVE-2022-33879 (terminal 1.x)
+            dependency 'org.apache.httpcomponents:httpclient:4.5.14'
             dependency 'io.swagger.core.v3:swagger-annotations:2.1.8'
             dependency 'jakarta.management.j2ee:jakarta.management.j2ee-api:1.1.4'
             dependency 'jakarta.jms:jakarta.jms-api:2.0.3'
             dependency 'jakarta.xml.bind:jakarta.xml.bind-api:2.3.3'
             dependency 'org.glassfish.jaxb:jaxb-runtime:2.3.4'
             dependency 'jakarta.validation:jakarta.validation-api:3.0.0'
-            dependency 'org.apache.activemq:activemq-broker:5.16.2'
+            dependency 'org.apache.activemq:activemq-broker:5.16.7' // CVE-2023-46604 (OpenWire RCE), CVE-2022-41678 (terminal 5.16.x)
             dependency 'org.apache.bval:org.apache.bval.bundle:2.0.5'
 
-            dependency 'io.github.classgraph:classgraph:4.8.105'
+            dependency 'io.github.classgraph:classgraph:4.8.112' // CVE-2021-47621
             dependency 'org.awaitility:awaitility:4.1.0'
             dependency 'com.github.spotbugs:spotbugs-annotations:4.2.3'
             dependency 'javax.cache:cache-api:1.1.1'
@@ -181,7 +222,8 @@ allprojects  {
                 exclude 'software.amazon.awssdk:s3'
             }
 
-            dependency ('org.dom4j:dom4j:2.1.3') {
+            dependency ('org.dom4j:dom4j:2.1.4') {
+                // latest 2.1.x (XXE CVE-2020-10683 already fixed in 2.1.3; kept current)
                 exclude 'relaxngDatatype:relaxngDatatype' // already in com.sun.xml.bind:jaxb-osgi:2.3.0.1
                 // FINERACT-940 && FINERACT-966 https://github.com/spotbugs/spotbugs/issues/1128
                 exclude 'xpp3:xpp3'
