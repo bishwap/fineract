@@ -38,7 +38,7 @@ buildscript {
         }
     }
     repositories {
-        jcenter()
+        mavenCentral()
         maven { url "https://plugins.gradle.org/m2/" }
     }
 
@@ -82,7 +82,7 @@ allprojects  {
     group = 'org.apache.fineract'
 
     repositories {
-        jcenter()
+        mavenCentral()
     }
 
     apply plugin: 'io.spring.dependency-management'
@@ -365,9 +365,9 @@ configure(project.fineractJavaProjects) {
     apply plugin: 'com.github.andygoossens.gradle-modernizer-plugin'
 
     /* define the valid syntax level for source files */
-    sourceCompatibility = JavaVersion.VERSION_11
+    sourceCompatibility = JavaVersion.VERSION_21
     /* define binary compatibility version */
-    targetCompatibility = JavaVersion.VERSION_11
+    targetCompatibility = JavaVersion.VERSION_21
 
     /* http://stackoverflow.com/questions/19653311/jpa-repository-works-in-idea-and-production-but-not-in-gradle */
     sourceSets.main.output.resourcesDir = sourceSets.main.java.outputDir
