@@ -255,6 +255,27 @@ bootJar {
     }
 }
 
+// The Swagger 'resolve' task writes the generated OpenAPI spec into build/classes/java/main
+// (via compileJava.finalizedBy resolve). Spring Boot's resolveMainClassName / bootJar consume that
+// same directory, so under Gradle 8's strict task-dependency validation they must declare an explicit
+// dependency on 'resolve'. See UPGRADE-JAVA21-NOTES.md Phase 8.
+tasks.named('resolveMainClassName') {
+    dependsOn 'resolve'
+}
+bootJar {
+    dependsOn 'resolve'
+}
+// checkstyle/spotbugs read build/classes/java/main as input; 'resolve' writes into it, so they need the
+// same explicit dependency under Gradle 8. See UPGRADE-JAVA21-NOTES.md Phase 8.
+tasks.matching {
+    it.name in [
+        'checkstyleMain',
+        'spotbugsMain'
+    ]
+}.configureEach {
+    dependsOn 'resolve'
+}
+
 bootWar {
     enabled = false
 }

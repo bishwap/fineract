@@ -51,13 +51,20 @@ task buildJavaSdk(type: org.openapitools.generator.gradle.plugin.tasks.GenerateT
         useRxJava2: 'false',
         library: 'retrofit2',
         hideGenerationTimestamp: 'true',
+        // Emit jakarta.* (e.g. jakarta.annotation.Generated) instead of javax.*; javax.annotation.Generated
+        // was removed from the JDK and the module is now on Java 21 / Jakarta. See UPGRADE-JAVA21-NOTES.md Phase 8.
+        useJakartaEe: 'true',
     ]
     generateModelTests = false
     generateApiTests = false
     ignoreFileOverride = "$projectDir/.openapi-generator-ignore"
-    // trick to make sure fineract.yaml is generated first
+    // trick to make sure fineract.yaml is generated first. Under Gradle 8's strict validation the
+    // producers of $swaggerFile (the Swagger 'resolve' task and processResources, which both write into
+    // fineract-provider/build/classes/java/main) must be declared explicitly. See NOTES Phase 8.
     dependsOn = [
-        ':fineract-provider:compileJava'
+        ':fineract-provider:compileJava',
+        ':fineract-provider:resolve',
+        ':fineract-provider:processResources'
     ]
     finalizedBy = [licenseFormat]
 }
@@ -78,6 +85,11 @@ task buildTypescriptAngularSdk(type: org.openapitools.generator.gradle.plugin.ta
         ngVersion: '10.0.0',
         npmName: 'apache-fineract-client'
     ]
+    dependsOn = [
+        ':fineract-provider:compileJava',
+        ':fineract-provider:resolve',
+        ':fineract-provider:processResources'
+    ]
     finalizedBy = [licenseFormat]
 }
 
@@ -90,6 +102,12 @@ sourceSets {
             srcDir "$buildDir/generated/java/src/main/java"
         }
     }
+}
+
+// The license plugin auto-creates license/licenseFormat tasks for the 'generated' sourceSet, which read
+// buildJavaSdk's output. Declare the dependency explicitly for Gradle 8's strict validation. See NOTES Phase 8.
+tasks.matching { it.name == 'licenseGenerated' || it.name == 'licenseFormatGenerated' }.configureEach {
+    dependsOn buildJavaSdk
 }
 
 java {

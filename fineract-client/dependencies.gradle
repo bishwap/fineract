@@ -28,9 +28,16 @@ dependencies {
             'io.gsonfire:gson-fire',
             'com.google.code.findbugs:jsr305',
             'com.squareup.okhttp3:logging-interceptor',
+            // Provides jakarta.annotation.Generated (and other jakarta.annotation.* types) referenced by the
+            // OpenAPI-generated SDK once useJakartaEe is enabled. See UPGRADE-JAVA21-NOTES.md Phase 8.
+            'jakarta.annotation:jakarta.annotation-api',
             )
-    // org.apache.oltu.oauth2 is used in org.apache.fineract.client.auth.OAuthOkHttpClient (only; can be excluded by consumers not requiring OAuth)
-    implementation('org.apache.oltu.oauth2:org.apache.oltu.oauth2.client') {
+    // org.apache.oltu.oauth2 is used in the generated org.apache.fineract.client.auth.OAuthOkHttpClient
+    // (only; can be excluded by consumers not requiring OAuth). Phase 6 migrated the SERVER off the legacy
+    // spring-security-oauth2/Oltu stack, so oltuVersion was dropped from root dependencyManagement; this
+    // generated client-SDK helper still references Oltu, so the version is pinned inline here (1.0.1, the last
+    // Oltu release). Removing it requires customising the OpenAPI generator template - see NOTES Phase 6/8.
+    implementation('org.apache.oltu.oauth2:org.apache.oltu.oauth2.client:1.0.1') {
         exclude group: 'org.apache.oltu.oauth2', module: 'org.apache.oltu.oauth2.common'
         exclude group: 'org.slf4j'
     }

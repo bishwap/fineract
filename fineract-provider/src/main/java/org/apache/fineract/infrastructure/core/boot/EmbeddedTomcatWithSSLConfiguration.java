@@ -24,6 +24,8 @@ import java.net.URL;
 import org.apache.catalina.connector.Connector;
 import org.apache.commons.io.FileUtils;
 import org.apache.coyote.http11.Http11NioProtocol;
+import org.apache.tomcat.util.net.SSLHostConfig;
+import org.apache.tomcat.util.net.SSLHostConfigCertificate;
 import org.springframework.boot.web.embedded.tomcat.TomcatServletWebServerFactory;
 import org.springframework.boot.web.servlet.server.ServletWebServerFactory;
 import org.springframework.context.annotation.Bean;
@@ -57,8 +59,15 @@ public class EmbeddedTomcatWithSSLConfiguration {
             connector.setSecure(true);
             connector.setPort(getHTTPSPort());
             protocol.setSSLEnabled(true);
-            protocol.setKeystoreFile(keystore.getAbsolutePath());
-            protocol.setKeystorePass(getKeystorePass());
+            // Tomcat 10.1 (Spring Boot 3) removed Http11NioProtocol#setKeystoreFile/#setKeystorePass;
+            // SSL is now configured through SSLHostConfig / SSLHostConfigCertificate.
+            final SSLHostConfig sslHostConfig = new SSLHostConfig();
+            final SSLHostConfigCertificate certificate = new SSLHostConfigCertificate(sslHostConfig,
+                    SSLHostConfigCertificate.Type.UNDEFINED);
+            certificate.setCertificateKeystoreFile(keystore.getAbsolutePath());
+            certificate.setCertificateKeystorePassword(getKeystorePass());
+            sslHostConfig.addCertificate(certificate);
+            connector.addSslHostConfig(sslHostConfig);
             return connector;
         } catch (IOException ex) {
             throw new IllegalStateException("can't access keystore: [" + "keystore" + "] or truststore: [" + "keystore" + "]", ex);

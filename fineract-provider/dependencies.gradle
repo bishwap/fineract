@@ -77,11 +77,20 @@ dependencies {
 
             'com.github.spotbugs:spotbugs-annotations',
             'io.swagger.core.v3:swagger-annotations',
+            // The Swagger gradle :resolve task instantiates io.swagger.v3.jaxrs2.Reader from the project's
+            // runtimeClasspath to scan JAX-RS resources into the OpenAPI spec. After the Jersey 3 migration the
+            // resources are jakarta.ws.rs; the -jakarta reader variant is required or the spec (and the generated
+            // fineract-client SDK) comes out empty. See UPGRADE-JAVA21-NOTES.md Phase 8.
+            'io.swagger.core.v3:swagger-jaxrs2-jakarta:2.2.20',
             'org.webjars:webjars-locator-core',
 
             'com.google.cloud.sql:mysql-socket-factory-connector-j-8:1.2.3',
             'com.squareup.retrofit2:converter-gson',
-            'com.sun.activation:jakarta.activation:1.2.2'
+            'com.sun.activation:jakarta.activation:1.2.2',
+            // Legacy Jackson 1.x, still referenced by template/interop/campaign classes (Phase 8 tech-debt).
+            'org.codehaus.jackson:jackson-mapper-asl',
+            // Provides jakarta.mail(.internet).* for the email/report-mailing services (Jakarta Mail 2.1).
+            'org.springframework.boot:spring-boot-starter-mail'
             )
     implementation ('jakarta.xml.bind:jakarta.xml.bind-api') {
         exclude group: 'jakarta.activation'
@@ -136,5 +145,4 @@ dependencies {
         exclude group: 'jakarta.activation'
         exclude group: 'javax.activation'
     }
-
 }
