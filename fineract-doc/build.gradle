@@ -124,5 +124,5 @@ task doc(type: Zip) {
             "$project.name-$project.version\\.pdf"
         }
     }
-    archiveName "$project.name-$project.version\\.zip"
+    archiveFileName = "${project.name}-${project.version}.zip"
 }

@@ -45,7 +45,7 @@ buildscript {
     dependencies {
         classpath 'com.bmuschko:gradle-cargo-plugin:2.8.0'
         classpath 'org.apache.openjpa:openjpa:3.2.0' // when upgrading, also change OpenJPA version repeated in fineract-provider/build.gradle! See UPGRADE-JAVA21-NOTES.md Phase 4.
-        classpath 'com.radcortez.gradle:openjpa-gradle-plugin:3.1.0' // BLOCKER: no jakarta-capable release; see UPGRADE-JAVA21-NOTES.md Phase 4.
+        classpath 'com.radcortez.gradle:openjpa-gradle-plugin:3.2.0' // 3.1.0 was jcenter-only; 3.2.0 is the latest published. BLOCKER: no jakarta-capable release; see UPGRADE-JAVA21-NOTES.md Phase 4.
         classpath 'com.github.spotbugs.snom:spotbugs-gradle-plugin:6.0.18'
         classpath 'com.github.andygoossens:gradle-modernizer-plugin:1.9.2'
     }
@@ -61,13 +61,13 @@ plugins {
     id 'org.springframework.boot' version '3.2.5' apply false
     id 'net.ltgt.errorprone' version '3.1.0' apply false
     id 'io.swagger.core.v3.swagger-gradle-plugin' version '2.2.20' apply false
-    id 'com.gorylenko.gradle-git-properties' version '2.2.4' apply false
-    id 'org.asciidoctor.jvm.convert' version '3.3.2' apply false
-    id 'org.asciidoctor.jvm.pdf' version '3.3.2' apply false
-    id 'org.asciidoctor.jvm.epub' version '3.3.2' apply false
-    id 'org.asciidoctor.jvm.revealjs' version '3.3.2' apply false
-    id 'org.asciidoctor.jvm.gems' version '3.3.2' apply false
-    id 'org.asciidoctor.kindlegen.base' version '3.2.0' apply false
+    id 'com.gorylenko.gradle-git-properties' version '2.4.1' apply false
+    id 'org.asciidoctor.jvm.convert' version '4.0.4' apply false
+    id 'org.asciidoctor.jvm.pdf' version '4.0.4' apply false
+    id 'org.asciidoctor.jvm.revealjs' version '4.0.4' apply false
+    // org.asciidoctor.jvm.epub / .gems / kindlegen removed: never applied (only convert/pdf/revealjs are
+    // used by fineract-doc) and the gems plugin dragged in the jcenter-only com.burgstaller:okhttp-digest:1.10.
+    // See UPGRADE-JAVA21-NOTES.md Phase 1.
 }
 
 description = '''\
@@ -75,7 +75,8 @@ Run as:
 gradle clean bootRun'''
 
 project.ext.jerseyVersion = '1.19.4'
-ext['groovy.version'] = '3.0.6'
+// groovy.version override removed: the Spring Boot 3.2 BOM manages Groovy 4.0.x (org.apache.groovy).
+// The old pin (3.0.6) forced a non-existent org.apache.groovy:groovy-bom:3.0.6. See UPGRADE-JAVA21-NOTES.md Phase 2.
 ext['swaggerFile'] = "$rootDir/fineract-provider/build/classes/java/main/static/swagger-ui/fineract.yaml".toString()
 
 allprojects  {
@@ -203,7 +204,7 @@ allprojects  {
                 entry 'poi-ooxml'
                 entry 'poi-ooxml-schemas'
             }
-            dependencySet(group: 'io.rest-assured', version: '4.3.0')
+            dependencySet(group: 'io.rest-assured', version: '5.4.0')
             {
                 entry 'rest-assured'
                 entry 'json-path'
@@ -370,8 +371,8 @@ configure(project.fineractJavaProjects) {
     targetCompatibility = JavaVersion.VERSION_21
 
     /* http://stackoverflow.com/questions/19653311/jpa-repository-works-in-idea-and-production-but-not-in-gradle */
-    sourceSets.main.output.resourcesDir = sourceSets.main.java.outputDir
-    sourceSets.test.output.resourcesDir = sourceSets.test.java.outputDir
+    sourceSets.main.output.resourcesDir = sourceSets.main.java.destinationDirectory.get().asFile
+    sourceSets.test.output.resourcesDir = sourceSets.test.java.destinationDirectory.get().asFile
 
     configurations {
         implementation.setCanBeResolved(true)
@@ -422,7 +423,7 @@ configure(project.fineractJavaProjects) {
     // https://github.com/diffplug/spotless/tree/main/plugin-gradle
     dependencies {
         spotbugsPlugins 'jp.skypencil.findbugs.slf4j:bug-pattern:1.5.0@jar'
-        spotbugs 'com.github.spotbugs:spotbugs:4.2.2'
+        spotbugs 'com.github.spotbugs:spotbugs:4.8.3'
     }
 
     spotless {
@@ -471,7 +472,7 @@ configure(project.fineractJavaProjects) {
     // If we are running Gradle within Eclipse to enhance classes with OpenJPA,
     // set the classes directory to point to Eclipse's default build directory
     if (project.hasProperty('env') && project.getProperty('env') == 'eclipse') {
-        sourceSets.main.java.outputDir = file("$projectDir/bin/main")
+        sourceSets.main.java.destinationDirectory.set(file("$projectDir/bin/main"))
     }
 
     // Configuration for the Checkstyle plugin
@@ -616,14 +617,14 @@ configure(project.fineractJavaProjects) {
 
     // To generate an HTML report instead of XML
     spotbugs {
-        reportLevel = 'high'
+        reportLevel = com.github.spotbugs.snom.Confidence.valueOf('HIGH')
         showProgress = true
     }
     // https://github.com/spotbugs/spotbugs-gradle-plugin/issues/242
     spotbugsMain {
         reports {
             html {
-                enabled = true
+                required = true
                 stylesheet = 'fancy-hist.xsl'
             }
         }
@@ -631,7 +632,7 @@ configure(project.fineractJavaProjects) {
     spotbugsTest {
         reports {
             html {
-                enabled = true
+                required = true
                 stylesheet = 'fancy-hist.xsl'
             }
         }
