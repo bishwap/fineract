@@ -471,7 +471,7 @@ configure(project.fineractJavaProjects) {
     // If we are running Gradle within Eclipse to enhance classes with OpenJPA,
     // set the classes directory to point to Eclipse's default build directory
     if (project.hasProperty('env') && project.getProperty('env') == 'eclipse') {
-        sourceSets.main.java.outputDir = file("$projectDir/bin/main")
+        sourceSets.main.java.destinationDirectory.set(file("$projectDir/bin/main"))
     }
 
     // Configuration for the Checkstyle plugin

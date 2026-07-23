@@ -57,7 +57,8 @@ attempt to make the application compile/run on Java 21.
   - `org.asciidoctor.jvm.*` (convert/pdf/epub/revealjs/gems) `3.3.2` → `4.0.5` (drops the
     `com.burgstaller:okhttp-digest:1.10` transitive that was jcenter-only).
   - Gradle 6→8 build-script API removals fixed (Gradle 8.7 is required for Java 21):
-    - `build.gradle`: `sourceSets.*.java.outputDir` → `.classesDirectory`.
+    - `build.gradle`: `sourceSets.*.java.outputDir` (read) → `.classesDirectory`; the writable
+      `sourceSets.main.java.outputDir = ...` in the `-Penv=eclipse` branch → `.destinationDirectory.set(...)`.
     - `build.gradle`: `jacoco { reportsDir = ... }` → `reportsDirectory`.
     - `build.gradle`: `jacocoTestReport` reports `html/xml.enabled` → `.required`,
       `html.destination` → `html.outputLocation`.
