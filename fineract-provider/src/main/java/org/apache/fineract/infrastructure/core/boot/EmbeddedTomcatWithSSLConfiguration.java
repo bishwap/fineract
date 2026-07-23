@@ -48,6 +48,9 @@ public class EmbeddedTomcatWithSSLConfiguration {
         return "/fineract-provider";
     }
 
+    // setKeystoreFile/setKeystorePass were deprecated (not removed) in the Tomcat 9.0.108 CVE
+    // upgrade; they remain the simplest way to configure the keystore on this embedded connector.
+    @SuppressWarnings("deprecation")
     protected Connector createSslConnector() {
         Connector connector = new Connector("org.apache.coyote.http11.Http11NioProtocol");
         Http11NioProtocol protocol = (Http11NioProtocol) connector.getProtocolHandler();
