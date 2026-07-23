@@ -45,7 +45,7 @@ buildscript {
     dependencies {
         classpath 'com.bmuschko:gradle-cargo-plugin:2.8.0'
         classpath 'org.apache.openjpa:openjpa:3.2.0' // when upgrading, also change OpenJPA version repeated in fineract-provider/build.gradle!
-        classpath 'com.radcortez.gradle:openjpa-gradle-plugin:3.1.0'
+        classpath 'com.radcortez.gradle:openjpa-gradle-plugin:3.2.0'
         classpath 'gradle.plugin.com.github.spotbugs.snom:spotbugs-gradle-plugin:4.7.1'
         classpath 'gradle.plugin.com.github.andygoossens:gradle-modernizer-plugin:1.3.0'
     }
@@ -61,12 +61,12 @@ plugins {
     id 'org.springframework.boot' version '2.3.5.RELEASE' apply false
     id 'net.ltgt.errorprone' version '2.0.1' apply false
     id 'io.swagger.core.v3.swagger-gradle-plugin' version '2.1.9' apply false
-    id 'com.gorylenko.gradle-git-properties' version '2.2.4' apply false
-    id 'org.asciidoctor.jvm.convert' version '3.3.2' apply false
-    id 'org.asciidoctor.jvm.pdf' version '3.3.2' apply false
-    id 'org.asciidoctor.jvm.epub' version '3.3.2' apply false
-    id 'org.asciidoctor.jvm.revealjs' version '3.3.2' apply false
-    id 'org.asciidoctor.jvm.gems' version '3.3.2' apply false
+    id 'com.gorylenko.gradle-git-properties' version '2.4.1' apply false
+    id 'org.asciidoctor.jvm.convert' version '4.0.5' apply false
+    id 'org.asciidoctor.jvm.pdf' version '4.0.5' apply false
+    id 'org.asciidoctor.jvm.epub' version '4.0.5' apply false
+    id 'org.asciidoctor.jvm.revealjs' version '4.0.5' apply false
+    id 'org.asciidoctor.jvm.gems' version '4.0.5' apply false
     id 'org.asciidoctor.kindlegen.base' version '3.2.0' apply false
 }
 
@@ -370,8 +370,8 @@ configure(project.fineractJavaProjects) {
     targetCompatibility = JavaVersion.VERSION_21
 
     /* http://stackoverflow.com/questions/19653311/jpa-repository-works-in-idea-and-production-but-not-in-gradle */
-    sourceSets.main.output.resourcesDir = sourceSets.main.java.outputDir
-    sourceSets.test.output.resourcesDir = sourceSets.test.java.outputDir
+    sourceSets.main.output.resourcesDir = sourceSets.main.java.classesDirectory
+    sourceSets.test.output.resourcesDir = sourceSets.test.java.classesDirectory
 
     configurations {
         implementation.setCanBeResolved(true)
@@ -485,14 +485,14 @@ configure(project.fineractJavaProjects) {
     // https://www.eclemma.org/jacoco/
     jacoco {
         toolVersion = jacocoVersion
-        reportsDir = file("$buildDir/reports/jacoco")
+        reportsDirectory = file("$buildDir/reports/jacoco")
     }
 
     jacocoTestReport {
         reports {
-            html.enabled=true
-            xml.enabled=true
-            html.destination file("${buildDir}/code-coverage")
+            html.required = true
+            xml.required = true
+            html.outputLocation = file("${buildDir}/code-coverage")
         }
     }
 
@@ -648,7 +648,6 @@ configure(project.fineractJavaProjects) {
 }
 
 configure(project.fineractPublishProjects) {
-    apply plugin: 'maven'
     apply plugin: 'maven-publish'
 
     publishing {
