@@ -22,9 +22,13 @@ Fixed Deposit create → 500 error → Dynatrace problem → webhook → this re
 | `config.js` | Reads all config from environment variables |
 | `lib/parseDynatrace.js` | Extracts title, impacted service, exception/root-cause details |
 | `lib/buildPrompt.js` | Builds the prompt handed to Devin |
-| `lib/devinClient.js` | Calls the Devin create-session API (**request shape marked TODO**) |
+| `lib/devinClient.js` | Calls the Devin create-session API (`POST /v1/sessions`) |
 | `samples/dynatrace-problem.sample.json` | Canned Dynatrace-shaped payload |
 | `scripts/replay-local.js` | Fire the sample through the core logic, no HTTP server |
+| `scripts/run-relay.sh` | Start the relay, loading `.env` if present |
+| `scripts/trigger-fd-500.sh` | Drive the Fixed Deposit endpoint to produce the seeded HTTP 500 |
+
+> **Full step-by-step demo runbook (incl. Dynatrace trial signup): [`DEMO.md`](./DEMO.md).**
 
 ## Endpoints
 
@@ -59,12 +63,11 @@ cd demo/dynatrace-devin-relay
 npm install
 
 # Option A: dry run — no Devin credentials needed, just prints the prompt
-DRY_RUN=1 npm start
+npm run dry-run
 
-# Option B: live — set credentials first
-export DEVIN_API_BASE=https://api.devin.ai
-export DEVIN_API_TOKEN=xxxxxxxx
-npm start
+# Option B: live — copy .env.example to .env, fill in the token, then:
+cp .env.example .env    # edit DEVIN_API_TOKEN
+npm run start:env       # loads .env automatically via scripts/run-relay.sh
 ```
 
 Trigger the manual replay against a running server:
@@ -97,7 +100,7 @@ URL is that URL plus the path: `https://<random>.ngrok-free.app/dynatrace-hook`.
 
 ## Configure the Dynatrace webhook
 
-1. In Dynatrace, go to **Settings → Integration → Problem notifications**.
+1. In Dynatrace, go to **Settings Classic → Integration → Problem notifications**.
 2. **Add notification → Custom integration**.
 3. **Webhook URL**: your public URL ending in `/dynatrace-hook`
    (e.g. `https://<random>.ngrok-free.app/dynatrace-hook`).
@@ -123,12 +126,22 @@ URL is that URL plus the path: `https://<random>.ngrok-free.app/dynatrace-hook`.
 The parser also accepts the raw Dynatrace Problems API v2 object shape, so it is
 tolerant of different payload configurations.
 
-## TODO — confirm the Devin API request shape
+## Devin API request shape
 
-`lib/devinClient.js` uses a **best-guess** request shape (path, method, body,
-auth header). **Confirm it against the official Devin API reference before a
-live demo:** https://docs.devin.ai/api-reference/overview
+`lib/devinClient.js` calls the Devin create-session API, verified against the
+official reference:
+<https://docs.devin.ai/api-reference/v1/sessions/create-a-new-devin-session>
 
-The block to verify/adjust is clearly marked with a `TODO / VERIFY` comment in
-`lib/devinClient.js` (currently assumes `POST {DEVIN_API_BASE}/v1/sessions` with
-a `Bearer` token and a `{ "prompt": "..." }` body).
+```
+POST {DEVIN_API_BASE}/v1/sessions          # DEVIN_API_BASE = https://api.devin.ai
+Authorization: Bearer {DEVIN_API_TOKEN}
+Content-Type: application/json
+
+{ "prompt": "<string>", "idempotent": true, "title": "<string>", "tags": ["dynatrace", ...] }
+```
+
+Successful (200) responses return `{ "session_id": "...", "url": "...", "is_new_session": ... }`;
+the relay echoes `session_id` and `url` back to the caller.
+
+Get a token from the Devin dashboard: **Settings → API Keys**
+(<https://app.devin.ai/settings/api-keys>).

@@ -2,37 +2,37 @@
 
 // Thin client for the Devin create-session API.
 //
-// ============================ TODO / VERIFY ================================
-// The exact request shape below (path, HTTP method, JSON body field names, and
-// auth header) is a BEST-GUESS placeholder and MUST be confirmed against the
-// official Devin API reference before relying on it in a live demo:
-//   https://docs.devin.ai/api-reference/overview
+// Request shape verified against the official Devin API reference:
+//   https://docs.devin.ai/api-reference/v1/sessions/create-a-new-devin-session
 //
-// As of writing, the documented shape is approximately:
-//   POST {DEVIN_API_BASE}/v1/sessions
+//   POST {DEVIN_API_BASE}/v1/sessions          (DEVIN_API_BASE = https://api.devin.ai)
 //   Authorization: Bearer {DEVIN_API_TOKEN}
 //   Content-Type: application/json
-//   Body: { "prompt": "<string>", "idempotent": true }
-// and the response includes a `session_id` and a `url`.
-//
-// Adjust CREATE_SESSION_PATH, the body, and the response parsing here once the
-// reference is confirmed.
-// ===========================================================================
+//   Body: {
+//     "prompt": "<string, required>",
+//     "idempotent": <boolean>,
+//     "title": "<string|null>",
+//     "tags": ["<string>", ...]
+//   }
+//   200 response: { "session_id": "<string>", "url": "<string>", "is_new_session": <boolean|null> }
 
 const CREATE_SESSION_PATH = '/v1/sessions';
 
-async function createDevinSession({ apiBase, apiToken }, prompt) {
+async function createDevinSession({ apiBase, apiToken }, prompt, options = {}) {
   if (!apiBase || !apiToken) {
     throw new Error('DEVIN_API_BASE and DEVIN_API_TOKEN must both be set to create a Devin session.');
   }
 
   const url = `${apiBase.replace(/\/+$/, '')}${CREATE_SESSION_PATH}`;
 
-  // TODO: confirm body field names against the Devin API reference.
   const body = {
     prompt,
-    idempotent: true,
+    // Idempotent so replaying the same Dynatrace problem does not spawn duplicate
+    // sessions during a demo.
+    idempotent: options.idempotent !== undefined ? options.idempotent : true,
   };
+  if (options.title) body.title = options.title;
+  if (options.tags && options.tags.length) body.tags = options.tags;
 
   const res = await fetch(url, {
     method: 'POST',
@@ -58,6 +58,7 @@ async function createDevinSession({ apiBase, apiToken }, prompt) {
     throw err;
   }
 
+  // 200 response: { session_id, url, is_new_session }
   return json;
 }
 

@@ -37,8 +37,12 @@ async function main() {
   }
 
   console.log('\n[replay] creating Devin session...');
-  const session = await createDevinSession(config.devin, prompt);
+  const title = `Dynatrace: ${problem.title || 'production incident'}`.slice(0, 120);
+  const tags = ['dynatrace', 'auto-relay'];
+  if (problem.problemId) tags.push(`problem:${problem.problemId}`);
+  const session = await createDevinSession(config.devin, prompt, { title, tags });
   console.log('[replay] created session:', JSON.stringify(session, null, 2));
+  if (session.url) console.log('[replay] session URL:', session.url);
 }
 
 main().catch((err) => {

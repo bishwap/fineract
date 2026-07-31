@@ -33,9 +33,18 @@ async function handleProblem(payload, res) {
   }
 
   try {
-    const session = await createDevinSession(config.devin, prompt);
+    const title = `Dynatrace: ${problem.title || 'production incident'}`.slice(0, 120);
+    const tags = ['dynatrace', 'auto-relay'];
+    if (problem.problemId) tags.push(`problem:${problem.problemId}`);
+    const session = await createDevinSession(config.devin, prompt, { title, tags });
     console.log('[relay] created Devin session:', JSON.stringify(session));
-    return res.status(202).json({ status: 'accepted', problem, session });
+    return res.status(202).json({
+      status: 'accepted',
+      problem,
+      session_id: session.session_id,
+      url: session.url,
+      session,
+    });
   } catch (err) {
     console.error('[relay] failed to create Devin session:', err.message);
     return res.status(502).json({
