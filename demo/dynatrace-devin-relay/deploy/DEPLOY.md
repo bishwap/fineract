@@ -38,7 +38,7 @@ SSH in, then:
 
 ```bash
 git clone https://github.com/bishwap/fineract.git
-cd fineract && git checkout demo/java11-baseline
+cd fineract && git checkout devin/1785460004-fd-dynatrace-demo
 cp demo/dynatrace-devin-relay/deploy/.env.deploy.example demo/dynatrace-devin-relay/deploy/.env.deploy
 nano demo/dynatrace-devin-relay/deploy/.env.deploy   # fill in DOMAIN, DEVIN_API_TOKEN, DT_*
 sudo bash demo/dynatrace-devin-relay/deploy/deploy.sh

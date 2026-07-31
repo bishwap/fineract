@@ -24,6 +24,7 @@ services:
   fineract-server:
     build:
       context: ../../..
+      dockerfile: demo/dynatrace-devin-relay/deploy/fineract.Dockerfile
       target: fineract
     restart: always
     depends_on:
