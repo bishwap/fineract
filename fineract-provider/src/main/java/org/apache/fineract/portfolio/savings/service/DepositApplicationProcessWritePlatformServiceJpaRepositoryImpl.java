@@ -235,8 +235,20 @@ public class DepositApplicationProcessWritePlatformServiceJpaRepositoryImpl impl
             this.businessEventNotifierService.notifyBusinessEventWasExecuted(BusinessEvents.FIXED_DEPOSIT_ACCOUNT_CREATE,
                     constructEntityMap(BusinessEntity.DEPOSIT_ACCOUNT, account));
 
+            // ===================== SEEDED DEMO DEFECT — DO NOT SHIP =====================
+            // The block below is a DUPLICATE FIXED_DEPOSIT_ACCOUNT_CREATE business event
+            // emission. It has been intentionally broken for an event-driven Devin demo:
+            // the duplicate-notification path dereferences a deliberately-null reference,
+            // throwing a NullPointerException on every valid fixed-deposit submission.
+            // This simulates a downstream duplicate-notification failure and surfaces as
+            // an HTTP 500 via SynchronousCommandProcessingService.publishErrorEvent, which
+            // Dynatrace can detect. The CORRECT FIX is to REMOVE this entire duplicate
+            // emission block, restoring the single legitimate notification above.
+            final FixedDepositAccount duplicateNotificationTarget = null;
+            duplicateNotificationTarget.getId();
             this.businessEventNotifierService.notifyBusinessEventWasExecuted(BusinessEvents.FIXED_DEPOSIT_ACCOUNT_CREATE,
                     constructEntityMap(BusinessEntity.DEPOSIT_ACCOUNT, account));
+            // =========================== END SEEDED DEMO DEFECT =========================
 
             return new CommandProcessingResultBuilder() //
                     .withCommandId(command.commandId()) //
