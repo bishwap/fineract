@@ -1,10 +1,10 @@
 {
   "ProblemID": "P-2308001",
-  "ProblemTitle": "HTTP 500 error rate increase on savingsaccounts (Fixed Deposit create)",
+  "ProblemTitle": "HTTP 500 error rate increase on fixeddepositaccounts (Fixed Deposit create)",
   "ProblemImpact": "SERVICE",
   "ProblemSeverity": "ERROR",
   "State": "OPEN",
   "ImpactedEntityNames": "fineract-provider",
   "ProblemURL": "https://xxxxxx.live.dynatrace.com/#problems/problemdetails;pid=P-2308001",
-  "ProblemDetailsText": "Failure rate increased to 100% on POST /fineract-provider/api/v1/savingsaccounts. Uncaught java.lang.NullPointerException in DepositApplicationProcessWritePlatformServiceJpaRepositoryImpl.submitFDApplication while emitting FIXED_DEPOSIT_ACCOUNT_CREATE business event. Error surfaced via SynchronousCommandProcessingService.publishErrorEvent as HTTP 500."
+  "ProblemDetailsText": "Failure rate increased to 100% on POST /fineract-provider/api/v1/fixeddepositaccounts. Uncaught java.lang.NullPointerException in DepositApplicationProcessWritePlatformServiceJpaRepositoryImpl.submitFDApplication while emitting FIXED_DEPOSIT_ACCOUNT_CREATE business event. Error surfaced via SynchronousCommandProcessingService.publishErrorEvent as HTTP 500."
 }

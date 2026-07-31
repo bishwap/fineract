@@ -26,6 +26,6 @@ module.exports = {
     repoRef: process.env.TARGET_REPO_REF || 'demo/java11-baseline',
     failingEndpoint:
       process.env.FAILING_ENDPOINT ||
-      'POST /fineract-provider/api/v1/savingsaccounts (Fixed Deposit create: submitFDApplication)',
+      'POST /fineract-provider/api/v1/fixeddepositaccounts (Fixed Deposit create: submitFDApplication)',
   },
 };
