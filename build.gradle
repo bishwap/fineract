@@ -420,7 +420,7 @@ configure(project.fineractJavaProjects) {
     dependencyCheck {
         // Report only: the full report is always generated; use -PdependencyCheckFailOnCVSS
         // to let a high severity finding actually break the build.
-        failBuildOnCVSS = project.hasProperty('dependencyCheckFailOnCVSS') ? (project.property('dependencyCheckFailOnCVSS').toString() as float) : 11
+        failBuildOnCVSS = project.hasProperty('dependencyCheckFailOnCVSS') ? (project.property('dependencyCheckFailOnCVSS').toString().isFloat() ? project.property('dependencyCheckFailOnCVSS').toString() as float : 7) : 11
         formats = ['HTML', 'JSON']
         outputDirectory = "$rootProject.buildDir/reports/dependency-check/$project.name"
         scanConfigurations = [
