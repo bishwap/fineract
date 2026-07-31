@@ -54,6 +54,7 @@ services:
       - DEVIN_API_BASE=${DEVIN_API_BASE:-https://api.devin.ai}
       - DEVIN_API_TOKEN=${DEVIN_API_TOKEN}
       - REPO_URL=${REPO_URL:-https://github.com/bishwap/fineract}
+      - TARGET_REPO_REF=${TARGET_REPO_REF:-devin/1785460004-fd-dynatrace-demo}
       - DRY_RUN=${DRY_RUN:-0}
 
   console:
