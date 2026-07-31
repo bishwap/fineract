@@ -169,18 +169,17 @@ async function createSession(fails) {
 
 async function handleFire(req, res) {
   const count = 1;
-  const t = await runTrigger(count);
-  const ops = [];
-  let sessionUrl = '';
-  try { const p = await raiseProblem(); ops.push({ step: 'Dynatrace', ok: p.ok, detail: p.detail }); }
-  catch (e) { ops.push({ step: 'Dynatrace', ok: false, detail: e.message }); }
-  try {
-    const s = await createSession(t.fails || count);
-    sessionUrl = s.sessionUrl;
-    ops.push({ step: 'Devin', ok: s.ok, detail: s.ok ? 'Remediation session opened' : s.detail });
-  } catch (e) { ops.push({ step: 'Devin', ok: false, detail: e.message }); }
+  // Raise the Dynatrace Problem immediately, in parallel with the failing
+  // request, so detection starts at t=0 instead of after the trigger + session.
+  const problemP = raiseProblem()
+    .then((p) => { console.log('[console] dynatrace:', p.ok ? 'problem raised' : p.detail); return p; })
+    .catch((e) => { console.log('[console] dynatrace error:', e.message); });
 
+  const t = await runTrigger(count);
   const failed = t.fails > 0;
+
+  // Respond to the customer right away (snappy UI); the remediation chain
+  // continues server-side and does not block the banking error the user sees.
   res.writeHead(200, { 'Content-Type': 'application/json' });
   res.end(JSON.stringify({
     ok: !failed,
@@ -189,8 +188,15 @@ async function handleFire(req, res) {
     message: failed
       ? 'The banking core returned an unexpected error (HTTP 500) while submitting this Fixed Deposit application.'
       : 'Fixed Deposit application submitted successfully.',
-    ops, sessionUrl,
   }));
+
+  // Dynatrace detected -> trigger Devin remediation (fire-and-forget).
+  if (failed) {
+    problemP
+      .then(() => createSession(t.fails || count))
+      .then((s) => console.log('[console] devin:', s.ok ? s.sessionUrl : s.detail))
+      .catch((e) => console.log('[console] devin error:', e.message));
+  }
 }
 
 // ------------------------------- page -------------------------------
@@ -266,17 +272,6 @@ function page() {
   .banner.good{background:#ecfdf3;border:1px solid #a6f4c5;color:#05603a;display:block}
   .banner .code{font-family:ui-monospace,Menlo,monospace;font-size:12px;opacity:.85;margin-top:6px}
   .steps{list-style:none;margin:8px 0 0;padding:0}
-  /* ops drawer */
-  #ops{position:fixed;right:0;top:0;bottom:0;width:360px;background:#0b1220;color:#cdd6e4;transform:translateX(100%);transition:.25s;z-index:60;box-shadow:-10px 0 40px rgba(0,0,0,.4);padding:18px}
-  #ops.open{transform:none}
-  #ops h4{margin:0 0 4px;color:#fff} #ops .muted{color:#8ea0bf;font-size:12px;margin-bottom:14px}
-  .op{background:#111a2e;border:1px solid #24314e;border-radius:10px;padding:12px 14px;margin-bottom:10px}
-  .op .t{font-weight:700} .op .d{color:#8ea0bf;font-size:12px;margin-top:3px;font-family:ui-monospace,Menlo,monospace}
-  .op.ok{border-color:#12b76a55} .op.bad{border-color:#f0433055}
-  .op .dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:8px}
-  .op.ok .dot{background:#12b76a} .op.bad .dot{background:#f04330}
-  .opslink{display:inline-block;margin-top:6px;background:#2970ff;color:#fff;text-decoration:none;padding:8px 12px;border-radius:8px;font-weight:600;font-size:13px}
-  .opsbtn{position:fixed;right:16px;bottom:16px;z-index:40;background:#101828;color:#fff;border:none;border-radius:999px;padding:10px 16px;font-size:13px;cursor:pointer;box-shadow:0 8px 24px rgba(0,0,0,.25)}
   .spin{display:inline-block;width:14px;height:14px;border:2px solid #ffffff66;border-top-color:#fff;border-radius:50%;animation:sp .7s linear infinite;vertical-align:-2px;margin-right:8px}
   @keyframes sp{to{transform:rotate(360deg)}}
 </style></head>
@@ -334,13 +329,6 @@ function page() {
         <button class="primary" id="msubmit">Submit application</button>
       </div>
     </div>
-  </div>
-
-  <button class="opsbtn" id="opsbtn">◐ Operations</button>
-  <div id="ops">
-    <h4>Operations &amp; Reliability</h4>
-    <div class="muted">Dynatrace → Devin auto-remediation (SRE view)</div>
-    <div id="opslist"><div class="op"><div class="d">No incidents yet. Submit a Fixed Deposit to see live detection.</div></div></div>
   </div>
 
 <script>
@@ -449,24 +437,11 @@ function page() {
           $('banner').innerHTML='<b>We couldn\\'t complete this request.</b><br>'+d.message+
             '<div class="code">HTTP '+d.httpStatus+' · reference '+d.reference+' · POST /fineract-provider/api/v1/fixeddepositaccounts</div>';
         }
-        renderOps(d.ops, d.sessionUrl); openOps();
       })
       .catch(function(e){ $('banner').className='banner err'; $('banner').innerHTML='Network error: '+e.message; })
       .finally(function(){ b.disabled=false; b.innerHTML='Submit application'; });
   });
 
-  // ops drawer
-  function openOps(){ $('ops').classList.add('open'); }
-  $('opsbtn').addEventListener('click', function(){ $('ops').classList.toggle('open'); });
-  function renderOps(ops, sessionUrl){
-    var html = '<div class="op bad"><div class="t"><span class="dot"></span>Fineract · Fixed Deposit create</div><div class="d">HTTP 500 — NullPointerException in submitFDApplication</div></div>';
-    (ops||[]).forEach(function(o){
-      html += '<div class="op '+(o.ok?'ok':'bad')+'"><div class="t"><span class="dot"></span>'+o.step+
-        (o.step==='Dynatrace'?' · Problem detected':' · auto-remediation')+'</div><div class="d">'+(o.detail||'')+'</div>'+
-        (o.step==='Devin'&&sessionUrl?'<a class="opslink" href="'+sessionUrl+'" target="_blank">Open Devin remediation session →</a>':'')+'</div>';
-    });
-    $('opslist').innerHTML = html;
-  }
 </script>
 </body></html>`;
 }
