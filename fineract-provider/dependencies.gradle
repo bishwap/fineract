@@ -17,7 +17,11 @@
  * under the License.
  */
 dependencies {
-    providedRuntime("org.springframework.boot:spring-boot-starter-tomcat")
+    // Tomcat 9.0.88 makes tomcat-embed-websocket depend on tomcat-websocket-api, which ships the very
+    // same javax.websocket classes (ClasspathHellDuplicatesCheckRuleTest).
+    providedRuntime("org.springframework.boot:spring-boot-starter-tomcat") {
+        exclude group: 'org.apache.tomcat', module: 'tomcat-websocket-api'
+    }
 
     // Never use "compile" scope, but make all dependencies either 'implementation', 'runtimeOnly' or 'testCompile'.
     // Note that we never use 'api', because Fineract at least currently is a simple monolithic application ("WAR"), not a library.
@@ -25,10 +29,12 @@ dependencies {
 
     // implementation dependencies are directly used (compiled against) in src/main (and src/test)
     //
+    implementation ('org.springframework.boot:spring-boot-starter-web') {
+        exclude group: 'org.apache.tomcat', module: 'tomcat-websocket-api'
+    }
     implementation(
             //'ch.vorburger.mariaDB4j:mariaDB4j:2.4.0',
 
-            'org.springframework.boot:spring-boot-starter-web',
             'org.springframework.boot:spring-boot-starter-security',
             'org.springframework.boot:spring-boot-starter-cache',
 
