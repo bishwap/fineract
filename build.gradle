@@ -38,8 +38,13 @@ buildscript {
         }
     }
     repositories {
-        jcenter()
+        mavenCentral()
         maven { url "https://plugins.gradle.org/m2/" }
+        // jcenter (bintray) was sunset. A few legacy build-plugin artifacts pinned above
+        // (openjpa-gradle-plugin 3.1.0, grgit-core 4.1.0, okhttp-digest 1.10) were never
+        // published to Maven Central, so we add a public mirror of jcenter's frozen
+        // content as a fallback to keep this demo branch building reproducibly.
+        maven { url "https://maven.aliyun.com/repository/jcenter" }
     }
 
     dependencies {
@@ -48,6 +53,15 @@ buildscript {
         classpath 'com.radcortez.gradle:openjpa-gradle-plugin:3.1.0'
         classpath 'gradle.plugin.com.github.spotbugs.snom:spotbugs-gradle-plugin:4.7.1'
         classpath 'gradle.plugin.com.github.andygoossens:gradle-modernizer-plugin:1.3.0'
+    }
+    // grgit-core 4.1.0 (pulled in by gradle-git-properties, used by the spotless plugin)
+    // declares its jGit dependency as version "RELEASE", which now resolves to a Java 17
+    // (class file v61) jGit build that neither Gradle 6.9's Groovy compiler nor a Java 11
+    // runtime can load. Pin jGit to the last Java 8/11-compatible 5.13.x release.
+    configurations.classpath {
+        resolutionStrategy {
+            force 'org.eclipse.jgit:org.eclipse.jgit:5.13.0.202109080827-r'
+        }
     }
 }
 
@@ -82,7 +96,10 @@ allprojects  {
     group = 'org.apache.fineract'
 
     repositories {
-        jcenter()
+        mavenCentral()
+        // Fallback mirror of jcenter's frozen content for legacy jcenter-only
+        // artifacts (see buildscript block above).
+        maven { url "https://maven.aliyun.com/repository/jcenter" }
     }
 
     apply plugin: 'io.spring.dependency-management'
