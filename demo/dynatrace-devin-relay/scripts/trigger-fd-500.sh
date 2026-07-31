@@ -19,6 +19,9 @@
 #   ADMIN_USER  admin username            (default mifos)
 #   ADMIN_PASS  admin password            (default password)
 #   COUNT       how many FD submissions   (default 1)
+#   FD_CLIENT_ID / FD_PRODUCT_ID  reuse an existing client/product and skip
+#                                 creation (used by the demo console so repeated
+#                                 clicks never collide on product short-names)
 
 set -uo pipefail
 
@@ -33,6 +36,12 @@ A=(-sk -u "$ADMIN_USER:$ADMIN_PASS" -H "Fineract-Platform-TenantId: $TENANT" -H 
 
 json_num() { grep -o "\"$1\":[0-9]*" | grep -o '[0-9]*' | head -1; }
 
+if [ -n "${FD_CLIENT_ID:-}" ] && [ -n "${FD_PRODUCT_ID:-}" ]; then
+  CLIENT_ID="$FD_CLIENT_ID"
+  PROD_ID="$FD_PRODUCT_ID"
+  echo "==> Reusing client=$CLIENT_ID product=$PROD_ID"
+else
+
 echo "==> Ensuring USD currency is enabled"
 curl "${A[@]}" -X PUT "$B/currencies" -d '{"currencies":["USD"]}' >/dev/null
 
@@ -46,8 +55,9 @@ CLIENT_ID=$(echo "$CLIENT" | json_num clientId)
 echo "    clientId=$CLIENT_ID"
 
 echo "==> Creating fixed-deposit product"
+SHORT="D$(date +%s | tail -c 4)$RANDOM"; SHORT="${SHORT:0:4}"
 PROD=$(curl "${A[@]}" -X POST "$B/fixeddepositproducts" -d '{
-  "name":"Demo FD Product '"$RANDOM"'","shortName":"D'"$((RANDOM%900+100))"'","description":"demo fd",
+  "name":"Demo FD Product '"$RANDOM"'","shortName":"'"$SHORT"'","description":"demo fd",
   "currencyCode":"USD","interestCalculationDaysInYearType":365,"locale":"en_GB",
   "digitsAfterDecimal":4,"inMultiplesOf":100,
   "interestCalculationType":1,"interestCompoundingPeriodType":4,"interestPostingPeriodType":4,
@@ -71,6 +81,8 @@ if [ -z "$CLIENT_ID" ] || [ -z "$PROD_ID" ]; then
   echo "  client response: $CLIENT"
   echo "  product response: $PROD"
   exit 1
+fi
+
 fi
 
 FAILS=0
