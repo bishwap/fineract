@@ -447,7 +447,10 @@ function page() {
 }
 
 const server = http.createServer((req, res) => {
-  if (req.method === 'GET' && (req.url === '/' || req.url.startsWith('/index'))) {
+  if (req.method === 'GET' && (req.url === '/' || req.url.split('?')[0] === '/' || req.url.startsWith('/index'))) {
+    // Lazily backfill the client directory if the startup bootstrap ran before
+    // Fineract was reachable (so it never shows the fallback "Demo Client").
+    if (!bank.clients.length) { bootstrap().catch(() => {}); }
     res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
     return res.end(page());
   }
@@ -460,9 +463,17 @@ const server = http.createServer((req, res) => {
   res.writeHead(404); res.end('not found');
 });
 
-bootstrap().then(() => {
-  server.listen(PORT, () => {
-    console.log(`[demo-console] ${BANK} console on http://localhost:${PORT} (Fineract=${BASE_URL}, relay=${RELAY}, DT=${DT || 'unset'})`);
-    console.log(`[demo-console] client=${bank.clientId} product=${bank.productId} clients-loaded=${bank.clients.length}`);
-  });
+async function bootstrapWithRetry() {
+  // Fineract can still be booting when the console starts; retry so the client
+  // directory is populated rather than falling back to a single "Demo Client".
+  for (let i = 0; i < 20 && !bank.clients.length; i += 1) {
+    await bootstrap();
+    if (!bank.clients.length) await new Promise((r) => setTimeout(r, 3000));
+  }
+  console.log(`[demo-console] client=${bank.clientId} product=${bank.productId} clients-loaded=${bank.clients.length}`);
+}
+
+server.listen(PORT, () => {
+  console.log(`[demo-console] ${BANK} console on http://localhost:${PORT} (Fineract=${BASE_URL}, relay=${RELAY}, DT=${DT || 'unset'})`);
+  bootstrapWithRetry();
 });
