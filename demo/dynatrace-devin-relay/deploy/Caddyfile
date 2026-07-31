@@ -1,0 +1,5 @@
+# If DOMAIN is set, Caddy gets a real Let's Encrypt cert automatically.
+# If DOMAIN is empty, it serves on :80 by the VM's IP (http only).
+{$DOMAIN:http://} {
+	reverse_proxy console:4000
+}
