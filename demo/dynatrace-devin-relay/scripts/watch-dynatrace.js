@@ -168,15 +168,31 @@ async function fire(payload) {
   return { status: res.status, body };
 }
 
+// tick() returns one of:
+//   'created' — a new Devin remediation session was created this run
+//   'raised'  — failures detected and Problem (re)raised, but Devin already fired
+//   null      — nothing detected
 async function tick() {
-  if (fs.existsSync(STATE_FILE)) {
-    console.log('[watch] already fired this run (state file present) — skipping. Remove', STATE_FILE, 'to re-arm.');
-    return true;
-  }
   const hit = await detect();
-  if (!hit) return false;
-  console.log('[watch] threshold exceeded -> raising Dynatrace Problem + notifying relay to open a Devin remediation PR...');
+  if (!hit) return null;
+
+  // Always surface a fresh Dynatrace Problem card when failures are detected,
+  // so the demo's "Dynatrace noticed the outage" beat is visible on every run.
+  console.log('[watch] threshold exceeded -> raising Dynatrace Problem...');
   await raiseDynatraceProblem(hit);
+
+  // The Devin remediation, however, fires only once (de-dup) so repeated
+  // detections during a demo don't spawn duplicate sessions/PRs.
+  if (fs.existsSync(STATE_FILE)) {
+    let prev = {};
+    try { prev = JSON.parse(fs.readFileSync(STATE_FILE, 'utf8')); } catch (_e) { /* ignore */ }
+    console.log('[watch] Devin remediation already triggered — not creating another session.');
+    if (prev.url) console.log('[watch] existing Devin session:', prev.url);
+    console.log('[watch] (remove', STATE_FILE, 'to re-arm a fresh remediation session.)');
+    return 'raised';
+  }
+
+  console.log('[watch] notifying relay to open a Devin remediation PR...');
   const payload = buildPayload(hit);
   const out = await fire(payload);
   console.log(`[watch] relay responded ${out.status}:`, JSON.stringify(out.body));
@@ -186,24 +202,23 @@ async function tick() {
     if (sessionUrl) {
       console.log('[watch] Devin session:', sessionUrl);
     }
-    return true;
+    return 'created';
   }
-  return false;
+  return null;
 }
 
 (async () => {
   console.log(`[watch] watching ${DT} for failed "${ENDPOINT}" requests; relay=${RELAY}`);
   if (POLL === 0) {
-    const done = await tick();
-    process.exit(done ? 0 : 1);
+    const r = await tick();
+    process.exit(r ? 0 : 1);
   }
   // eslint-disable-next-line no-constant-condition
   while (true) {
     try {
-      const done = await tick();
-      if (done) {
-        console.log('[watch] done — Devin has been triggered. Exiting.');
-        process.exit(0);
+      const r = await tick();
+      if (r === 'created') {
+        console.log('[watch] done — Devin remediation session created. Continuing to keep the Problem fresh (Ctrl+C to stop).');
       }
     } catch (e) {
       console.error('[watch] error:', e.message);
