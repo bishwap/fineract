@@ -215,7 +215,7 @@ allprojects  {
             dependency 'com.google.oauth-client:google-oauth-client:1.34.1' // CVE-2021-22573
             dependency 'org.mozilla:rhino:1.7.15.1' // CVE-2025-66453
             dependency 'net.minidev:json-smart:2.4.11' // CVE-2021-27568, CVE-2023-1370
-            dependencySet(group: 'org.jetbrains.kotlin', version: '1.6.21') {
+            dependencySet(group: 'org.jetbrains.kotlin', version: '1.9.10') {
                 // CVE-2020-29582, CVE-2022-24329
                 entry 'kotlin-stdlib'
                 entry 'kotlin-stdlib-common'
@@ -420,9 +420,9 @@ configure(project.fineractJavaProjects) {
     dependencyCheck {
         // Report only: the full report is always generated; use -PdependencyCheckFailOnCVSS
         // to let a high severity finding actually break the build.
-        failBuildOnCVSS = project.hasProperty('dependencyCheckFailOnCVSS') ? 7 : 11
+        failBuildOnCVSS = project.hasProperty('dependencyCheckFailOnCVSS') ? (project.property('dependencyCheckFailOnCVSS').toString() as float) : 11
         formats = ['HTML', 'JSON']
-        outputDirectory = "$rootProject.buildDir/reports/dependency-check"
+        outputDirectory = "$rootProject.buildDir/reports/dependency-check/$project.name"
         scanConfigurations = [
             'compileClasspath',
             'runtimeClasspath'
