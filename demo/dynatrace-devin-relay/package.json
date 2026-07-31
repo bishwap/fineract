@@ -9,7 +9,8 @@
     "start": "node server.js",
     "start:env": "bash scripts/run-relay.sh",
     "dry-run": "DRY_RUN=1 node server.js",
-    "replay": "node scripts/replay-local.js"
+    "replay": "node scripts/replay-local.js",
+    "watch:dynatrace": "node scripts/watch-dynatrace.js"
   },
   "engines": {
     "node": ">=18"

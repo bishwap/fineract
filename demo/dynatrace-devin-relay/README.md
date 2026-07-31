@@ -126,6 +126,36 @@ URL is that URL plus the path: `https://<random>.ngrok-free.app/dynatrace-hook`.
 The parser also accepts the raw Dynatrace Problems API v2 object shape, so it is
 tolerant of different payload configurations.
 
+## Grail / Gen3 tenants: the DQL watcher
+
+Newer Dynatrace tenants (`*.apps.dynatrace.com`, "Grail"/Gen3) do **not** expose
+the classic Problem-notification webhook shown above, and their Workflow
+JavaScript tasks require a per-user **Authorization Settings** toggle that can
+only be set in the UI (a token cannot). To keep the demo fully API-driven,
+`scripts/watch-dynatrace.js` polls Dynatrace's own detection data with **DQL**
+and fires the relay the moment the failure spike appears:
+
+```
+Fixed Deposit create → 500 → OneAgent → (DQL) watcher → this relay → Devin session → PR
+```
+
+The watcher:
+1. counts failed `submitApplication` spans in a rolling window (`fetch spans … request.is_failed==true`),
+2. pulls the real exception Dynatrace captured (`fetch logs … NullPointerException … submitFDApplication`),
+3. POSTs a Dynatrace-shaped payload to `/dynatrace-hook` when the count crosses a threshold — so it flows through the exact same parse → prompt → Devin path.
+
+```bash
+# relay running on :3000 (live, not DRY_RUN)
+DT_ENVIRONMENT=https://xxxxxxxx.apps.dynatrace.com \
+DT_DQL_TOKEN=<platform token with storage:*:read> \
+npm run watch:dynatrace
+```
+
+It fires once (guarded by a state file, `STATE_FILE`, default
+`/tmp/devin-dynatrace-fired`); remove that file to re-arm. See `.env.example`
+for all watcher variables. The token needs Grail storage read scope (DQL); the
+narrow OneAgent *deployment* token is not sufficient.
+
 ## Devin API request shape
 
 `lib/devinClient.js` calls the Devin create-session API, verified against the
