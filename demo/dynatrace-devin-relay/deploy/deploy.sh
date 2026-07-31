@@ -17,9 +17,14 @@ cd "$(dirname "$0")/../../.."          # repo root
 DEPLOY_DIR="demo/dynatrace-devin-relay/deploy"
 COMPOSE="docker compose -f $DEPLOY_DIR/docker-compose.demo.yml --env-file $DEPLOY_DIR/.env.deploy"
 
-echo "==> [1/6] Installing Docker (if missing)"
+echo "==> [1/6] Installing Docker (if missing) + ensuring swap"
 if ! command -v docker >/dev/null 2>&1; then
   curl -fsSL https://get.docker.com | sh
+fi
+# The Gradle build is memory-hungry; add swap on small VMs to avoid an OOM kill.
+if [ ! -f /swapfile ] && [ "$(free -m | awk '/Mem:/{print $2}')" -lt 6000 ]; then
+  echo "   adding 4G swap"
+  fallocate -l 4G /swapfile && chmod 600 /swapfile && mkswap /swapfile && swapon /swapfile || true
 fi
 
 echo "==> [2/6] Optional: install Dynatrace OneAgent"
@@ -30,18 +35,18 @@ else
   echo "   skipped (set DT_ENVIRONMENT + DT_PLATFORM_TOKEN to enable)"
 fi
 
-echo "==> [3/6] Building + starting MySQL and Fineract (first build takes ~10-15 min)"
-$COMPOSE up -d --build fineractmysql fineract-server
+echo "==> [3/6] Building all images (Fineract build takes ~10-15 min) + starting MySQL and Fineract"
+$COMPOSE build
+$COMPOSE up -d fineractmysql fineract-server
 
-echo "==> [4/6] Waiting for Fineract to be healthy"
+echo "==> [4/6] Waiting for Fineract to be healthy (first boot runs DB migrations, be patient)"
 for i in $(seq 1 60); do
-  if $COMPOSE exec -T fineract-server sh -c 'true' 2>/dev/null && \
-     curl -sk https://localhost:8443/fineract-provider/actuator/health 2>/dev/null | grep -q '"status":"UP"'; then
+  if $COMPOSE run --rm -T --no-deps console \
+       curl -sk https://fineract-server:8443/fineract-provider/actuator/health 2>/dev/null | grep -q '"status":"UP"'; then
     echo "   Fineract is UP"; break
   fi
-  # health is checked from the host against the mapped port if exposed; otherwise from within
   sleep 15
-  [ "$i" = "60" ] && echo "   WARNING: Fineract health not confirmed; continuing"
+  [ "$i" = "60" ] && echo "   WARNING: Fineract health not confirmed; continuing anyway"
 done
 
 echo "==> [5/6] Seeding a demo client + fixed-deposit product"
