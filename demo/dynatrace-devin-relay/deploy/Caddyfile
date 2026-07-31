@@ -1,5 +1,6 @@
-# If DOMAIN is set, Caddy gets a real Let's Encrypt cert automatically.
-# If DOMAIN is empty, it serves on :80 by the VM's IP (http only).
-{$DOMAIN:http://} {
+# Default: serve the console over plain http on :80 (IP-based access).
+# deploy.sh rewrites this to "<domain> { reverse_proxy console:4000 }" when
+# DOMAIN is set in .env.deploy, which enables automatic HTTPS.
+:80 {
 	reverse_proxy console:4000
 }

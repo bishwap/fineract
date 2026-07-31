@@ -61,7 +61,16 @@ if [ -n "$CID" ] && [ -n "$PID" ]; then
 fi
 
 echo "==> [6/6] Starting relay, console and Caddy"
-$COMPOSE up -d --build relay console caddy
+# Generate the Caddy config: auto-HTTPS on the domain if set, else plain :80.
+DOMAIN=$(grep '^DOMAIN=' "$DEPLOY_DIR/.env.deploy" | cut -d= -f2)
+if [ -n "$DOMAIN" ]; then
+  printf '%s {\n\treverse_proxy console:4000\n}\n' "$DOMAIN" > "$DEPLOY_DIR/Caddyfile"
+else
+  printf ':80 {\n\treverse_proxy console:4000\n}\n' > "$DEPLOY_DIR/Caddyfile"
+fi
+# No --build here: images were built in step 3, and rebuilding would be a no-op
+# at best (or a costly cache miss if .env.deploy changed the build context).
+$COMPOSE up -d --no-build relay console caddy
 
 echo
 echo "==> Done."
