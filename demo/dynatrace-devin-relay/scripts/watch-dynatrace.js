@@ -21,6 +21,12 @@
 //   WINDOW_MINUTES   detection window (default 10)
 //   POLL_SECONDS     poll interval; 0 = run once and exit (default 20)
 //   STATE_FILE       de-dup marker (default /tmp/devin-dynatrace-fired)
+//   RAISE_DT_PROBLEM if "1" (default when token present), also ingest a
+//                    CUSTOM_ALERT event onto the impacted service so a real
+//                    Problem card appears in Dynatrace's Problems screen. On a
+//                    mature tenant Davis raises this automatically; on a fresh
+//                    trial its baseline is slow, so we raise the same Problem
+//                    deterministically to keep the demo reliable.
 
 const DT = (process.env.DT_ENVIRONMENT || '').replace(/\/+$/, '');
 const TOKEN = process.env.DT_DQL_TOKEN || '';
@@ -30,6 +36,7 @@ const THRESHOLD = parseInt(process.env.FAIL_THRESHOLD || '5', 10);
 const WINDOW = parseInt(process.env.WINDOW_MINUTES || '10', 10);
 const POLL = parseInt(process.env.POLL_SECONDS || '20', 10);
 const STATE_FILE = process.env.STATE_FILE || '/tmp/devin-dynatrace-fired';
+const RAISE_DT_PROBLEM = (process.env.RAISE_DT_PROBLEM || '1') !== '0';
 const fs = require('fs');
 
 if (!DT || !TOKEN) {
@@ -90,7 +97,48 @@ async function detect() {
     console.log('[watch] (could not fetch exception log:', e.message, ')');
   }
 
-  return { failed, exception };
+  // Capture the impacted service entity so we can raise a Problem card on it.
+  let serviceId = '';
+  try {
+    const svc = await dql(
+      `fetch spans, from:now()-${WINDOW}m | filter endpoint.name=="${ENDPOINT}" and request.is_failed==true | summarize c=count(), by:{dt.entity.service} | sort c desc | limit 1 | fields sid=dt.entity.service`
+    );
+    serviceId = svc[0]?.sid || '';
+  } catch (e) {
+    console.log('[watch] (could not resolve service entity:', e.message, ')');
+  }
+
+  return { failed, exception, serviceId };
+}
+
+// Open a real Dynatrace Problem by ingesting a CUSTOM_ALERT event on the
+// impacted service (Events API v2). Best-effort: never blocks the Devin trigger.
+async function raiseDynatraceProblem({ failed, exception, serviceId }) {
+  if (!RAISE_DT_PROBLEM || !serviceId) return;
+  const url = `${DT}/platform/classic/environment-api/v2/events/ingest`;
+  const body = {
+    eventType: 'CUSTOM_ALERT',
+    title: `HTTP 500 failure spike on Fixed Deposit create (${ENDPOINT})`,
+    entitySelector: `type(SERVICE),entityId(${serviceId})`,
+    properties: {
+      'dt.event.description':
+        `Dynatrace observed ${failed} failed requests on the Fixed Deposit create endpoint within ${WINDOW}m (100% failure rate). ` +
+        (exception || 'Uncaught java.lang.NullPointerException in DepositApplicationProcessWritePlatformServiceJpaRepositoryImpl.submitFDApplication while emitting the duplicate FIXED_DEPOSIT_ACCOUNT_CREATE business event.'),
+      endpoint: 'POST /fineract-provider/api/v1/fixeddepositaccounts',
+    },
+  };
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${TOKEN}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    const j = await res.json().catch(() => ({}));
+    const ok = j?.eventIngestResults?.every((r) => r.status === 'OK');
+    console.log(`[watch] raised Dynatrace Problem on ${serviceId} -> ${res.status} ${ok ? 'OK' : JSON.stringify(j)}`);
+  } catch (e) {
+    console.log('[watch] (could not raise Dynatrace Problem:', e.message, ')');
+  }
 }
 
 function buildPayload({ failed, exception }) {
@@ -127,7 +175,8 @@ async function tick() {
   }
   const hit = await detect();
   if (!hit) return false;
-  console.log('[watch] threshold exceeded -> notifying relay to open a Devin remediation PR...');
+  console.log('[watch] threshold exceeded -> raising Dynatrace Problem + notifying relay to open a Devin remediation PR...');
+  await raiseDynatraceProblem(hit);
   const payload = buildPayload(hit);
   const out = await fire(payload);
   console.log(`[watch] relay responded ${out.status}:`, JSON.stringify(out.body));
