@@ -235,9 +235,6 @@ public class DepositApplicationProcessWritePlatformServiceJpaRepositoryImpl impl
             this.businessEventNotifierService.notifyBusinessEventWasExecuted(BusinessEvents.FIXED_DEPOSIT_ACCOUNT_CREATE,
                     constructEntityMap(BusinessEntity.DEPOSIT_ACCOUNT, account));
 
-            this.businessEventNotifierService.notifyBusinessEventWasExecuted(BusinessEvents.FIXED_DEPOSIT_ACCOUNT_CREATE,
-                    constructEntityMap(BusinessEntity.DEPOSIT_ACCOUNT, account));
-
             return new CommandProcessingResultBuilder() //
                     .withCommandId(command.commandId()) //
                     .withEntityId(savingsId) //
