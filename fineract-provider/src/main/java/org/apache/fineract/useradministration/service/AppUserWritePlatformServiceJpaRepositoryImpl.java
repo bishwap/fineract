@@ -35,6 +35,7 @@ import org.apache.fineract.infrastructure.core.data.CommandProcessingResultBuild
 import org.apache.fineract.infrastructure.core.exception.PlatformApiDataValidationException;
 import org.apache.fineract.infrastructure.core.exception.PlatformDataIntegrityException;
 import org.apache.fineract.infrastructure.core.service.PlatformEmailSendException;
+import org.apache.fineract.infrastructure.security.exception.NoAuthorizationException;
 import org.apache.fineract.infrastructure.security.service.PlatformPasswordEncoder;
 import org.apache.fineract.infrastructure.security.service.PlatformSecurityContext;
 import org.apache.fineract.notification.service.TopicDomainService;
@@ -73,6 +74,9 @@ import org.springframework.util.ObjectUtils;
 public class AppUserWritePlatformServiceJpaRepositoryImpl implements AppUserWritePlatformService {
 
     private static final Logger LOG = LoggerFactory.getLogger(AppUserWritePlatformServiceJpaRepositoryImpl.class);
+
+    private static final List<String> PRIVILEGED_UPDATE_PARAMETERS = List.of("roles", "officeId", "staffId",
+            AppUserConstants.IS_SELF_SERVICE_USER, AppUserConstants.CLIENTS);
 
     private final PlatformSecurityContext context;
     private final UserDomainService userDomainService;
@@ -183,7 +187,7 @@ public class AppUserWritePlatformServiceJpaRepositoryImpl implements AppUserWrit
     @Caching(evict = { @CacheEvict(value = "users", allEntries = true), @CacheEvict(value = "usersByUsername", allEntries = true) })
     public CommandProcessingResult updateUser(final Long userId, final JsonCommand command) {
         try {
-            this.context.authenticatedUser(new CommandWrapperBuilder().updateUser(null).build());
+            final AppUser currentUser = this.context.authenticatedUser(new CommandWrapperBuilder().updateUser(null).build());
 
             this.fromApiJsonDeserializer.validateForUpdate(command.json());
 
@@ -207,6 +211,8 @@ public class AppUserWritePlatformServiceJpaRepositoryImpl implements AppUserWrit
             }
 
             final Map<String, Object> changes = userToUpdate.update(command, this.platformPasswordEncoder, clients);
+
+            validateSelfUpdateDoesNotChangePrivilegedFields(currentUser, userId, changes);
 
             this.topicDomainService.updateUserSubscription(userToUpdate, changes);
             if (changes.containsKey("officeId")) {
@@ -251,6 +257,33 @@ public class AppUserWritePlatformServiceJpaRepositoryImpl implements AppUserWrit
             LOG.error("updateUser: JpaSystemException | PersistenceException | AuthenticationServiceException", dve);
             Throwable throwable = ExceptionUtils.getRootCause(dve.getCause());
             throw handleDataIntegrityIssues(command, throwable, dve);
+        }
+    }
+
+    /**
+     * The self-update path (PUT /users/{ownId}) bypasses the {@code UPDATE_USER} permission check in
+     * {@code PortfolioCommandSourceWritePlatformServiceImpl#logCommandSource} so that a user can maintain their own
+     * benign profile fields (password, email, name). It must not become a privilege-escalation vector: a caller who
+     * lacks {@code UPDATE_USER} (and {@code ALL_FUNCTIONS}) may not use it to change privilege-relevant fields such as
+     * roles, office, staff or self-service/client linkage on their own account.
+     */
+    private void validateSelfUpdateDoesNotChangePrivilegedFields(final AppUser currentUser, final Long userId,
+            final Map<String, Object> changes) {
+        final boolean isSelfUpdate = currentUser.hasIdOf(userId);
+        if (!isSelfUpdate) {
+            return;
+        }
+
+        final boolean isAuthorisedToUpdateUsers = !currentUser.hasNotPermissionForAnyOf("ALL_FUNCTIONS", "UPDATE_USER");
+        if (isAuthorisedToUpdateUsers) {
+            return;
+        }
+
+        for (final String privilegedParameter : PRIVILEGED_UPDATE_PARAMETERS) {
+            if (changes.containsKey(privilegedParameter)) {
+                throw new NoAuthorizationException(
+                        "User does not have sufficient permissions to change '" + privilegedParameter + "' on their own account.");
+            }
         }
     }
 
