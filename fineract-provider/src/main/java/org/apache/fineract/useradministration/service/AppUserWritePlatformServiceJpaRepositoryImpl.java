@@ -20,6 +20,7 @@ package org.apache.fineract.useradministration.service;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -47,6 +48,7 @@ import org.apache.fineract.portfolio.client.domain.Client;
 import org.apache.fineract.portfolio.client.domain.ClientRepositoryWrapper;
 import org.apache.fineract.useradministration.api.AppUserApiConstant;
 import org.apache.fineract.useradministration.domain.AppUser;
+import org.apache.fineract.useradministration.domain.AppUserClientMapping;
 import org.apache.fineract.useradministration.domain.AppUserPreviousPassword;
 import org.apache.fineract.useradministration.domain.AppUserPreviousPasswordRepository;
 import org.apache.fineract.useradministration.domain.AppUserRepository;
@@ -74,9 +76,6 @@ import org.springframework.util.ObjectUtils;
 public class AppUserWritePlatformServiceJpaRepositoryImpl implements AppUserWritePlatformService {
 
     private static final Logger LOG = LoggerFactory.getLogger(AppUserWritePlatformServiceJpaRepositoryImpl.class);
-
-    private static final List<String> PRIVILEGED_UPDATE_PARAMETERS = List.of("roles", "officeId", "staffId",
-            AppUserConstants.IS_SELF_SERVICE_USER, AppUserConstants.CLIENTS);
 
     private final PlatformSecurityContext context;
     private final UserDomainService userDomainService;
@@ -210,9 +209,9 @@ public class AppUserWritePlatformServiceJpaRepositoryImpl implements AppUserWrit
                 clients = this.clientRepositoryWrapper.findAll(clientIds);
             }
 
-            final Map<String, Object> changes = userToUpdate.update(command, this.platformPasswordEncoder, clients);
+            validateSelfUpdateDoesNotChangePrivilegedFields(currentUser, userToUpdate, command);
 
-            validateSelfUpdateDoesNotChangePrivilegedFields(currentUser, userId, changes);
+            final Map<String, Object> changes = userToUpdate.update(command, this.platformPasswordEncoder, clients);
 
             this.topicDomainService.updateUserSubscription(userToUpdate, changes);
             if (changes.containsKey("officeId")) {
@@ -267,9 +266,9 @@ public class AppUserWritePlatformServiceJpaRepositoryImpl implements AppUserWrit
      * lacks {@code UPDATE_USER} (and {@code ALL_FUNCTIONS}) may not use it to change privilege-relevant fields such as
      * roles, office, staff or self-service/client linkage on their own account.
      */
-    private void validateSelfUpdateDoesNotChangePrivilegedFields(final AppUser currentUser, final Long userId,
-            final Map<String, Object> changes) {
-        final boolean isSelfUpdate = currentUser.hasIdOf(userId);
+    private void validateSelfUpdateDoesNotChangePrivilegedFields(final AppUser currentUser, final AppUser userToUpdate,
+            final JsonCommand command) {
+        final boolean isSelfUpdate = currentUser.hasIdOf(userToUpdate.getId());
         if (!isSelfUpdate) {
             return;
         }
@@ -279,12 +278,72 @@ public class AppUserWritePlatformServiceJpaRepositoryImpl implements AppUserWrit
             return;
         }
 
-        for (final String privilegedParameter : PRIVILEGED_UPDATE_PARAMETERS) {
-            if (changes.containsKey(privilegedParameter)) {
-                throw new NoAuthorizationException(
-                        "User does not have sufficient permissions to change '" + privilegedParameter + "' on their own account.");
+        final String changedPrivilegedField = findChangedPrivilegedField(userToUpdate, command);
+        if (changedPrivilegedField != null) {
+            throw new NoAuthorizationException("User does not have sufficient permissions to change '" + changedPrivilegedField
+                    + "' on their own account.");
+        }
+    }
+
+    /**
+     * Returns the name of the first privilege-relevant field the command would actually change relative to the user's
+     * current state, or {@code null} if none. The comparisons mirror {@link AppUser#update} so that a request which
+     * merely echoes unchanged values (e.g. the same {@code clients} list or a {@code null} {@code staffId}) is not
+     * treated as a privileged change.
+     */
+    private String findChangedPrivilegedField(final AppUser userToUpdate, final JsonCommand command) {
+        if (command.isChangeInArrayParameterNamed("roles", getRolesAsIdStringArray(userToUpdate))) {
+            return "roles";
+        }
+        if (command.isChangeInLongParameterNamed("officeId", userToUpdate.getOffice().getId())) {
+            return "officeId";
+        }
+        if (command.isChangeInLongParameterNamed("staffId", userToUpdate.getStaffId())) {
+            return "staffId";
+        }
+        if (command.isChangeInBooleanParameterNamed(AppUserConstants.IS_SELF_SERVICE_USER, userToUpdate.isSelfServiceUser())) {
+            return AppUserConstants.IS_SELF_SERVICE_USER;
+        }
+        if (isChangeInClientLinkage(userToUpdate, command)) {
+            return AppUserConstants.CLIENTS;
+        }
+        return null;
+    }
+
+    private static String[] getRolesAsIdStringArray(final AppUser user) {
+        final List<String> roleIds = new ArrayList<>();
+        for (final Role role : user.getRoles()) {
+            roleIds.add(role.getId().toString());
+        }
+        return roleIds.toArray(new String[0]);
+    }
+
+    private boolean isChangeInClientLinkage(final AppUser userToUpdate, final JsonCommand command) {
+        if (!command.hasParameter(AppUserConstants.CLIENTS)) {
+            return false;
+        }
+
+        // A clients array is only applied by AppUser.update when the (effective) account is a self-service user.
+        final boolean isSelfServiceUser = command.hasParameter(AppUserConstants.IS_SELF_SERVICE_USER)
+                ? command.booleanPrimitiveValueOfParameterNamed(AppUserConstants.IS_SELF_SERVICE_USER)
+                : userToUpdate.isSelfServiceUser();
+        if (!isSelfServiceUser) {
+            return false;
+        }
+
+        final Set<Long> existingClientIds = new HashSet<>();
+        if (userToUpdate.getAppUserClientMappings() != null) {
+            for (final AppUserClientMapping mapping : userToUpdate.getAppUserClientMappings()) {
+                existingClientIds.add(mapping.getClient().getId());
             }
         }
+
+        final Set<Long> submittedClientIds = new HashSet<>();
+        for (final JsonElement clientElement : command.arrayOfParameterNamed(AppUserConstants.CLIENTS)) {
+            submittedClientIds.add(clientElement.getAsLong());
+        }
+
+        return !existingClientIds.equals(submittedClientIds);
     }
 
     /**
