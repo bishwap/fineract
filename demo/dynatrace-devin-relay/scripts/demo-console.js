@@ -39,6 +39,7 @@ const DT = (process.env.DT_ENVIRONMENT || '').replace(/\/+$/, '');
 const DT_TOKEN = process.env.DT_DQL_TOKEN || '';
 const DT_ENTITY = process.env.DT_ENTITY || '';
 const ENDPOINT = process.env.FAIL_ENDPOINT || 'submitApplication';
+const PROBLEM_TIMEOUT_MIN = parseInt(process.env.DT_PROBLEM_TIMEOUT_MIN || '10', 10);
 const BANK = process.env.BANK_NAME || 'Meridian Bank';
 const FD_CLIENT_ID = process.env.FD_CLIENT_ID || '';
 const FD_PRODUCT_ID = process.env.FD_PRODUCT_ID || '';
@@ -128,6 +129,10 @@ async function raiseProblem() {
     eventType: 'CUSTOM_ALERT',
     title: `HTTP 500 failure spike on Fixed Deposit create (${ENDPOINT})`,
     entitySelector: `type(SERVICE),entityId(${DT_ENTITY})`,
+    // Auto-close the raised Problem after this many minutes of no new events so
+    // stale demo Problems don't pile up in Dynatrace. Refired on each failure,
+    // so it stays open while the demo is actively triggering.
+    timeout: PROBLEM_TIMEOUT_MIN,
     properties: {
       'dt.event.description':
         'Uncaught java.lang.NullPointerException in DepositApplicationProcessWritePlatformServiceJpaRepositoryImpl.submitFDApplication ' +
