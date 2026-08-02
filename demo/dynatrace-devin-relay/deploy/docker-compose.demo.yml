@@ -77,6 +77,7 @@ services:
       - DT_ENTITY=${DT_ENTITY}
       - FAIL_ENDPOINT=${FAIL_ENDPOINT:-submitApplication}
       - BANK_NAME=${BANK_NAME:-Meridian Bank}
+      - RUM_TAG=${RUM_TAG:-}
       - NODE_TLS_REJECT_UNAUTHORIZED=0
 
   caddy:
