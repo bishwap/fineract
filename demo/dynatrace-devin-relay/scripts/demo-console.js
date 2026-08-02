@@ -180,7 +180,11 @@ async function handleFire(req, res) {
 
   // Respond to the customer right away (snappy UI); the remediation chain
   // continues server-side and does not block the banking error the user sees.
-  res.writeHead(200, { 'Content-Type': 'application/json' });
+  // Surface the real backend status (500 on failure) so the browser records a
+  // genuine failed request — Dynatrace RUM then captures it as a failed user
+  // action on the Fixed Deposit create flow. The frontend reads the JSON body
+  // regardless of status, so the customer-facing banner is unchanged.
+  res.writeHead(failed ? 500 : 200, { 'Content-Type': 'application/json' });
   res.end(JSON.stringify({
     ok: !failed,
     httpStatus: failed ? 500 : 200,
