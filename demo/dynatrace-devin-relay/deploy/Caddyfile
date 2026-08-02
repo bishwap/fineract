@@ -2,5 +2,14 @@
 # deploy.sh rewrites this to "<domain> { reverse_proxy console:4000 }" when
 # DOMAIN is set in .env.deploy, which enables automatic HTTPS.
 :80 {
+	# Dynatrace RUM: serve the JS agent + receive beacons same-origin by
+	# proxying to the Dynatrace tenant (avoids cross-origin/CORS issues so the
+	# browser agent initializes and reports real-user data).
+	@rum path /ruxitagentjs* /ruxitagentjsdbg* /rb_* /dynaTraceMonitor*
+	handle @rum {
+		reverse_proxy https://ntt81973.live.dynatrace.com {
+			header_up Host ntt81973.live.dynatrace.com
+		}
+	}
 	reverse_proxy console:4000
 }
