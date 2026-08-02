@@ -1,0 +1,21 @@
+{
+  "name": "dynatrace-devin-relay",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Minimal webhook relay that forwards Dynatrace problem notifications to the Devin create-session API.",
+  "type": "commonjs",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "start:env": "bash scripts/run-relay.sh",
+    "dry-run": "DRY_RUN=1 node server.js",
+    "replay": "node scripts/replay-local.js",
+    "watch:dynatrace": "node scripts/watch-dynatrace.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "express": "^4.19.2"
+  }
+}

@@ -1,0 +1,30 @@
+# Default: serve the console over plain http on :80 (IP-based access).
+# deploy.sh rewrites this to "<domain> { reverse_proxy console:4000 }" when
+# DOMAIN is set in .env.deploy, which enables automatic HTTPS.
+:80 {
+	# Dynatrace RUM: serve the JS agent + receive beacons same-origin by
+	# proxying to the Dynatrace tenant. The RUM agent sends its beacon as a
+	# credentialed request (it carries the rxVisitor/dtCookie cookies), so the
+	# proxied tenant response must carry CORS headers echoing the caller's exact
+	# Origin and the exact requested headers — with credentials a "*" wildcard
+	# is invalid and the browser blocks the response, so the beacon fails with
+	# status 0 and no real-user data is reported. Preflight (OPTIONS) is
+	# answered locally with 204 so it never round-trips to the tenant.
+	@rum path /ruxitagentjs* /ruxitagentjsdbg* /rb_* /dynaTraceMonitor*
+	handle @rum {
+		header {
+			Access-Control-Allow-Origin "{http.request.header.Origin}"
+			Access-Control-Allow-Credentials "true"
+			Access-Control-Allow-Headers "{http.request.header.Access-Control-Request-Headers}"
+			Access-Control-Allow-Methods "GET, POST, OPTIONS"
+			Vary "Origin"
+			defer
+		}
+		@preflight method OPTIONS
+		respond @preflight 204
+		reverse_proxy https://ntt81973.live.dynatrace.com {
+			header_up Host ntt81973.live.dynatrace.com
+		}
+	}
+	reverse_proxy console:4000
+}
