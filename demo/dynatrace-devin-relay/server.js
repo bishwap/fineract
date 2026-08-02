@@ -8,6 +8,7 @@ const config = require('./config');
 const { parseDynatraceProblem } = require('./lib/parseDynatrace');
 const { buildPrompt } = require('./lib/buildPrompt');
 const { createDevinSession } = require('./lib/devinClient');
+const { notifySlack } = require('./lib/notifySlack');
 
 const app = express();
 app.use(express.json({ limit: '1mb' }));
@@ -38,6 +39,11 @@ async function handleProblem(payload, res) {
     if (problem.problemId) tags.push(`problem:${problem.problemId}`);
     const session = await createDevinSession(config.devin, prompt, { title, tags });
     console.log('[relay] created Devin session:', JSON.stringify(session));
+    // Surface the incident in Slack too (no-op unless SLACK_WEBHOOK_URL is set).
+    // Best-effort: never let a Slack hiccup fail the incident response.
+    notifySlack(problem, session)
+      .then((r) => console.log('[relay] slack:', r.skipped ? 'skipped (no webhook)' : r.ok ? 'posted' : r.detail))
+      .catch((e) => console.log('[relay] slack error:', e.message));
     return res.status(202).json({
       status: 'accepted',
       problem,

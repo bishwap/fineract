@@ -12,6 +12,8 @@
 //   TARGET_REPO_URL  Repo the triggered Devin session should work in
 //   TARGET_REPO_REF  Git ref/branch the session should start from
 //   FAILING_ENDPOINT Human-readable description of the failing endpoint
+//   SLACK_WEBHOOK_URL Slack Incoming Webhook to post the incident to (optional;
+//                     when unset the Slack notification is simply skipped)
 
 module.exports = {
   port: parseInt(process.env.PORT || '3000', 10),
@@ -19,6 +21,10 @@ module.exports = {
   devin: {
     apiBase: process.env.DEVIN_API_BASE || '',
     apiToken: process.env.DEVIN_API_TOKEN || '',
+  },
+
+  slack: {
+    webhookUrl: process.env.SLACK_WEBHOOK_URL || '',
   },
 
   target: {
