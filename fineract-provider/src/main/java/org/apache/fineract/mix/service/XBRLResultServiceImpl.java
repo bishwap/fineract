@@ -154,6 +154,9 @@ public class XBRLResultServiceImpl implements XBRLResultService {
         }
 
         // evaluate the expression as plain arithmetic, never as script
+        if (mappingString == null || mappingString.trim().isEmpty()) {
+            return BigDecimal.ZERO;
+        }
         try {
             return new BigDecimal(ArithmeticExpressionEvaluator.evaluate(mappingString).floatValue());
         } catch (final IllegalArgumentException e) {
