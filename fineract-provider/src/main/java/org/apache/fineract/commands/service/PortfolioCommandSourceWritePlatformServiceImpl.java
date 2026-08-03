@@ -57,7 +57,7 @@ public class PortfolioCommandSourceWritePlatformServiceImpl implements Portfolio
 
     // Fields on a USER update that alter privileges/scope and therefore must not be changeable via the self-update bypass.
     private static final Set<String> PRIVILEGED_USER_UPDATE_PARAMETERS = Set.of("roles", "notSelectedRoles", "officeId", "staffId",
-            AppUserConstants.IS_SELF_SERVICE_USER, AppUserConstants.CLIENTS);
+            AppUserConstants.IS_SELF_SERVICE_USER, AppUserConstants.CLIENTS, AppUserConstants.PASSWORD_NEVER_EXPIRES);
 
     @Autowired
     public PortfolioCommandSourceWritePlatformServiceImpl(final PlatformSecurityContext context,
