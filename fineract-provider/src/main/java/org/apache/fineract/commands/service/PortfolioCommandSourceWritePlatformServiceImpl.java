@@ -21,6 +21,7 @@ package org.apache.fineract.commands.service;
 import com.google.gson.JsonElement;
 import java.time.ZonedDateTime;
 import java.util.Random;
+import java.util.Set;
 import org.apache.fineract.commands.domain.CommandSource;
 import org.apache.fineract.commands.domain.CommandSourceRepository;
 import org.apache.fineract.commands.domain.CommandWrapper;
@@ -35,6 +36,7 @@ import org.apache.fineract.infrastructure.core.service.ThreadLocalContextUtil;
 import org.apache.fineract.infrastructure.jobs.service.SchedulerJobRunnerReadService;
 import org.apache.fineract.infrastructure.security.service.PlatformSecurityContext;
 import org.apache.fineract.useradministration.domain.AppUser;
+import org.apache.fineract.useradministration.service.AppUserConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -53,6 +55,10 @@ public class PortfolioCommandSourceWritePlatformServiceImpl implements Portfolio
     private final SchedulerJobRunnerReadService schedulerJobRunnerReadService;
     private static final Logger LOG = LoggerFactory.getLogger(PortfolioCommandSourceWritePlatformServiceImpl.class);
 
+    // Fields on a USER update that alter privileges/scope and therefore must not be changeable via the self-update bypass.
+    private static final Set<String> PRIVILEGED_USER_UPDATE_PARAMETERS = Set.of("roles", "notSelectedRoles", "officeId", "staffId",
+            AppUserConstants.IS_SELF_SERVICE_USER, AppUserConstants.CLIENTS);
+
     @Autowired
     public PortfolioCommandSourceWritePlatformServiceImpl(final PlatformSecurityContext context,
             final CommandSourceRepository commandSourceRepository, final FromJsonHelper fromApiJsonHelper,
@@ -69,15 +75,15 @@ public class PortfolioCommandSourceWritePlatformServiceImpl implements Portfolio
     public CommandProcessingResult logCommandSource(final CommandWrapper wrapper) {
 
         boolean isApprovedByChecker = false;
-        // check if is update of own account details
-        if (wrapper.isUpdateOfOwnUserDetails(this.context.authenticatedUser(wrapper).getId())) {
+        // check if is update of own account details, restricted to non-privileged (self-editable) fields only.
+        if (wrapper.isUpdateOfOwnUserDetails(this.context.authenticatedUser(wrapper).getId()) && !isUpdatingPrivilegedUserFields(wrapper)) {
             // then allow this operation to proceed.
             // maker checker doesnt mean anything here.
             isApprovedByChecker = true; // set to true in case permissions have
                                         // been maker-checker enabled by
                                         // accident.
         } else {
-            // if not user changing their own details - check user has
+            // if not user changing their own (non-privileged) details - check user has
             // permission to perform specific task.
             this.context.authenticatedUser(wrapper).validateHasPermissionTo(wrapper.getTaskPermissionName());
         }
@@ -180,6 +186,25 @@ public class PortfolioCommandSourceWritePlatformServiceImpl implements Portfolio
     private boolean validateIsUpdateAllowed() {
         return this.schedulerJobRunnerReadService.isUpdatesAllowed();
 
+    }
+
+    /**
+     * Determines whether a USER update request tries to change privilege-relevant fields (roles, office, staff or
+     * self-service linkage). Such changes must never be allowed through the self-update bypass; they always require the
+     * caller to hold the specific task permission.
+     */
+    private boolean isUpdatingPrivilegedUserFields(final CommandWrapper wrapper) {
+        final String json = wrapper.getJson();
+        if (json == null) {
+            return false;
+        }
+        final JsonElement parsedCommand = this.fromApiJsonHelper.parse(json);
+        for (final String parameter : PRIVILEGED_USER_UPDATE_PARAMETERS) {
+            if (this.fromApiJsonHelper.parameterExists(parameter, parsedCommand)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override
