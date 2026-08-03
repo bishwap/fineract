@@ -35,6 +35,7 @@ import org.apache.fineract.infrastructure.core.data.CommandProcessingResultBuild
 import org.apache.fineract.infrastructure.core.exception.PlatformApiDataValidationException;
 import org.apache.fineract.infrastructure.core.exception.PlatformDataIntegrityException;
 import org.apache.fineract.infrastructure.core.service.PlatformEmailSendException;
+import org.apache.fineract.infrastructure.security.exception.NoAuthorizationException;
 import org.apache.fineract.infrastructure.security.service.PlatformPasswordEncoder;
 import org.apache.fineract.infrastructure.security.service.PlatformSecurityContext;
 import org.apache.fineract.notification.service.TopicDomainService;
@@ -73,6 +74,13 @@ import org.springframework.util.ObjectUtils;
 public class AppUserWritePlatformServiceJpaRepositoryImpl implements AppUserWritePlatformService {
 
     private static final Logger LOG = LoggerFactory.getLogger(AppUserWritePlatformServiceJpaRepositoryImpl.class);
+
+    /**
+     * Privilege-bearing update parameters that a user must NOT be able to change on their own account via a self-update
+     * unless they hold the {@code UPDATE_USER} permission.
+     */
+    private static final Set<String> PRIVILEGED_UPDATE_PARAMETERS = Set.of("roles", "officeId", "staffId",
+            AppUserConstants.IS_SELF_SERVICE_USER, AppUserConstants.CLIENTS);
 
     private final PlatformSecurityContext context;
     private final UserDomainService userDomainService;
@@ -183,7 +191,7 @@ public class AppUserWritePlatformServiceJpaRepositoryImpl implements AppUserWrit
     @Caching(evict = { @CacheEvict(value = "users", allEntries = true), @CacheEvict(value = "usersByUsername", allEntries = true) })
     public CommandProcessingResult updateUser(final Long userId, final JsonCommand command) {
         try {
-            this.context.authenticatedUser(new CommandWrapperBuilder().updateUser(null).build());
+            final AppUser currentUser = this.context.authenticatedUser(new CommandWrapperBuilder().updateUser(null).build());
 
             this.fromApiJsonDeserializer.validateForUpdate(command.json());
 
@@ -207,6 +215,8 @@ public class AppUserWritePlatformServiceJpaRepositoryImpl implements AppUserWrit
             }
 
             final Map<String, Object> changes = userToUpdate.update(command, this.platformPasswordEncoder, clients);
+
+            validateSelfUpdateDoesNotChangePrivilegedFields(currentUser, userToUpdate, changes);
 
             this.topicDomainService.updateUserSubscription(userToUpdate, changes);
             if (changes.containsKey("officeId")) {
@@ -277,6 +287,31 @@ public class AppUserWritePlatformServiceJpaRepositoryImpl implements AppUserWrit
         }
 
         return currentPasswordToSaveAsPreview;
+    }
+
+    /**
+     * A self-update (a user updating their own record) bypasses the {@code UPDATE_USER} permission check in the command
+     * pipeline. To prevent privilege escalation, a caller updating their own record who does not otherwise hold the
+     * {@code UPDATE_USER} permission is not allowed to change privilege-bearing fields (roles, office, staff or
+     * self-service/client associations); only self-service profile fields such as password, name and email may be
+     * changed.
+     */
+    private void validateSelfUpdateDoesNotChangePrivilegedFields(final AppUser currentUser, final AppUser userToUpdate,
+            final Map<String, Object> changes) {
+        final boolean isSelfUpdate = currentUser.hasIdOf(userToUpdate.getId());
+        if (!isSelfUpdate) {
+            return;
+        }
+        final boolean hasUpdateUserPermission = !currentUser.hasNotPermissionForAnyOf("UPDATE_USER");
+        if (hasUpdateUserPermission) {
+            return;
+        }
+        for (final String privilegedParam : PRIVILEGED_UPDATE_PARAMETERS) {
+            if (changes.containsKey(privilegedParam)) {
+                throw new NoAuthorizationException(
+                        "User is not permitted to change the '" + privilegedParam + "' field of their own account.");
+            }
+        }
     }
 
     private Set<Role> assembleSetOfRoles(final String[] rolesArray) {
