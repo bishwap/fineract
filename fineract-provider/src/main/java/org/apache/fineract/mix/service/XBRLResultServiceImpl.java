@@ -26,9 +26,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import javax.script.ScriptEngine;
-import javax.script.ScriptEngineManager;
-import javax.script.ScriptException;
 import org.apache.fineract.infrastructure.core.service.RoutingDataSource;
 import org.apache.fineract.mix.data.MixTaxonomyData;
 import org.apache.fineract.mix.data.MixTaxonomyMappingData;
@@ -45,7 +42,6 @@ import org.springframework.stereotype.Component;
 public class XBRLResultServiceImpl implements XBRLResultService {
 
     private static final Logger LOG = LoggerFactory.getLogger(XBRLResultServiceImpl.class);
-    private static final ScriptEngine SCRIPT_ENGINE = new ScriptEngineManager().getEngineByName("JavaScript");
 
     private final MixTaxonomyMappingReadPlatformService readTaxonomyMappingService;
     private final MixTaxonomyReadPlatformService readTaxonomyService;
@@ -157,19 +153,13 @@ public class XBRLResultServiceImpl implements XBRLResultService {
             mappingString = mappingString.replaceAll("\\{" + glcode + "\\}", balance != null ? balance.toString() : "0");
         }
 
-        // evaluate the expression
-        Float eval = 0f;
+        // evaluate the expression as plain arithmetic, never as script
         try {
-            final Number value = (Number) SCRIPT_ENGINE.eval(mappingString);
-            if (value != null) {
-                eval = value.floatValue();
-            }
-        } catch (final ScriptException e) {
+            return new BigDecimal(ArithmeticExpressionEvaluator.evaluate(mappingString).floatValue());
+        } catch (final IllegalArgumentException e) {
             LOG.error("Problem occurred in processMappingString function", e);
-            throw new IllegalArgumentException(e.getMessage(), e);
+            throw e;
         }
-
-        return new BigDecimal(eval);
     }
 
     public ArrayList<String> getGLCodes(final String template) {

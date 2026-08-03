@@ -19,9 +19,12 @@
 package org.apache.fineract.mix.report.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import org.apache.fineract.infrastructure.core.service.RoutingDataSource;
+import org.apache.fineract.mix.service.ArithmeticExpressionEvaluator;
 import org.apache.fineract.mix.service.XBRLResultServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -46,6 +49,21 @@ public class ReadTaxonomyMappingServiceImplTest {
         final ArrayList<String> result = this.readService.getGLCodes("{12000}+{11000}");
         assertEquals("12000", result.get(0));
         assertEquals("11000", result.get(1));
+    }
+
+    @Test
+    public void shouldEvaluateArithmeticExpressions() {
+        assertEquals(0, new BigDecimal("13.5").compareTo(ArithmeticExpressionEvaluator.evaluate("10 + 2.5 * (4 - 2.6)")));
+        assertEquals(0, new BigDecimal("-5").compareTo(ArithmeticExpressionEvaluator.evaluate("-10/2")));
+    }
+
+    @Test
+    public void shouldRejectNonArithmeticExpressions() {
+        assertThrows(IllegalArgumentException.class,
+                () -> ArithmeticExpressionEvaluator.evaluate("java.lang.Runtime.getRuntime().exec('touch /tmp/pwned'); 1"));
+        assertThrows(IllegalArgumentException.class, () -> ArithmeticExpressionEvaluator.evaluate("1; 2"));
+        assertThrows(IllegalArgumentException.class, () -> ArithmeticExpressionEvaluator.evaluate("(1 + 2"));
+        assertThrows(IllegalArgumentException.class, () -> ArithmeticExpressionEvaluator.evaluate(""));
     }
 
 }
