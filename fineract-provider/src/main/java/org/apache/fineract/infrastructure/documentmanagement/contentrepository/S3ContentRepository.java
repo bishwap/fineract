@@ -61,7 +61,7 @@ public class S3ContentRepository implements ContentRepository {
 
     @Override
     public String saveFile(final InputStream toUpload, final DocumentCommand documentCommand) {
-        final String fileName = documentCommand.getFileName();
+        final String fileName = ContentRepositoryUtils.sanitizeFileName(documentCommand.getFileName());
         ContentRepositoryUtils.validateFileSizeWithinPermissibleRange(documentCommand.getSize(), fileName);
 
         final String uploadDocFolder = generateFileParentDirectory(documentCommand.getParentEntityType(),
@@ -79,22 +79,24 @@ public class S3ContentRepository implements ContentRepository {
 
     @Override
     public String saveImage(final InputStream toUploadInputStream, final Long resourceId, final String imageName, final Long fileSize) {
-        ContentRepositoryUtils.validateFileSizeWithinPermissibleRange(fileSize, imageName);
+        final String fileName = ContentRepositoryUtils.sanitizeFileName(imageName);
+        ContentRepositoryUtils.validateFileSizeWithinPermissibleRange(fileSize, fileName);
         final String uploadImageLocation = generateClientImageParentDirectory(resourceId);
-        final String fileLocation = uploadImageLocation + File.separator + imageName;
+        final String fileLocation = uploadImageLocation + File.separator + fileName;
 
-        putObject(imageName, toUploadInputStream, fileLocation);
+        putObject(fileName, toUploadInputStream, fileLocation);
         return fileLocation;
     }
 
     @Override
     public String saveImage(final Base64EncodedImage base64EncodedImage, final Long resourceId, final String imageName) {
+        final String fileName = ContentRepositoryUtils.sanitizeFileName(imageName + base64EncodedImage.getFileExtension());
         final String uploadImageLocation = generateClientImageParentDirectory(resourceId);
-        final String fileLocation = uploadImageLocation + File.separator + imageName + base64EncodedImage.getFileExtension();
+        final String fileLocation = uploadImageLocation + File.separator + fileName;
         final InputStream toUploadInputStream = new ByteArrayInputStream(
                 Base64.getMimeDecoder().decode(base64EncodedImage.getBase64EncodedString()));
 
-        putObject(imageName, toUploadInputStream, fileLocation);
+        putObject(fileName, toUploadInputStream, fileLocation);
         return fileLocation;
     }
 
