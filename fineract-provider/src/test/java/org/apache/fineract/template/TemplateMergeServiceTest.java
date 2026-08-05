@@ -140,15 +140,45 @@ public class TemplateMergeServiceTest {
         invokeValidateUrl("https://1.1.1.1/some/path");
     }
 
+    @Test
+    public void ssrfGuardPinsConnectUrlToResolvedIp() throws Exception {
+        // The returned connect URL must target the resolved IP (defeats DNS rebinding) while preserving the
+        // original host as the Host header, and keeping scheme/port/path/query intact.
+        Object safeUrl = invokeValidateUrl("http://8.8.8.8:81/some/path?q=1");
+        assertEquals("http://8.8.8.8:81/some/path?q=1", readField(safeUrl, "connectUrl"));
+        assertEquals("8.8.8.8:81", readField(safeUrl, "hostHeader"));
+    }
+
+    @Test
+    public void ssrfGuardAllowsSelfReferentialBaseUri() throws Exception {
+        // A mapper URL pointing back at the application's own base URI must be allowed even though it resolves to
+        // loopback/private, otherwise legitimate self-referential fetches break on localhost/internal deployments.
+        Field scopesField = TemplateMergeService.class.getDeclaredField("scopes");
+        scopesField.setAccessible(true);
+        Map<String, Object> scopes = new HashMap<>();
+        scopes.put("BASE_URI", "https://localhost:8443/fineract-provider/api/v1/");
+        scopesField.set(tms, scopes);
+
+        invokeValidateUrl("https://localhost:8443/fineract-provider/api/v1/runreports/x");
+        // A different loopback origin (not the base URI) must still be rejected.
+        assertUrlRejected("https://localhost:9999/other");
+    }
+
     private void assertUrlRejected(String url) {
         InvocationTargetException wrapper = assertThrows(InvocationTargetException.class, () -> invokeValidateUrl(url));
         assertTrue(wrapper.getCause() instanceof IOException, "Expected IOException for URL: " + url);
     }
 
-    private void invokeValidateUrl(String url) throws Exception {
-        Method method = TemplateMergeService.class.getDeclaredMethod("validateUrlForSsrf", String.class);
+    private Object invokeValidateUrl(String url) throws Exception {
+        Method method = TemplateMergeService.class.getDeclaredMethod("validateAndPinUrl", String.class);
         method.setAccessible(true);
-        method.invoke(tms, url);
+        return method.invoke(tms, url);
+    }
+
+    private String readField(Object obj, String fieldName) throws Exception {
+        Field f = obj.getClass().getDeclaredField(fieldName);
+        f.setAccessible(true);
+        return (String) f.get(obj);
     }
 
     protected String compileTemplateText(String templateText, Map<String, Object> scope) throws MalformedURLException, IOException {
