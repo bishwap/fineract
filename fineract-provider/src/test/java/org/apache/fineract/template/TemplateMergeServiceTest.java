@@ -19,6 +19,8 @@
 package org.apache.fineract.template;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.google.common.io.Resources;
 import com.google.common.reflect.TypeToken;
@@ -28,6 +30,8 @@ import com.google.gson.JsonParser;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.math.RoundingMode;
 import java.net.MalformedURLException;
@@ -112,6 +116,69 @@ public class TemplateMergeServiceTest {
 
         String output = compileTemplateText(templateText, scopes);
         assertEquals(expectedOutput, output);
+    }
+
+    @Test
+    public void ssrfGuardRejectsForbiddenMapperUrls() throws Exception {
+        // Cloud metadata endpoint, loopback, private ranges and non-http schemes must be rejected.
+        assertUrlRejected("http://169.254.169.254/latest/meta-data/iam/security-credentials/");
+        assertUrlRejected("http://127.0.0.1/internal");
+        assertUrlRejected("http://localhost:8080/admin");
+        assertUrlRejected("http://10.0.0.1/");
+        assertUrlRejected("http://192.168.1.1/");
+        assertUrlRejected("http://172.16.0.1/");
+        assertUrlRejected("http://[::1]/");
+        assertUrlRejected("file:///etc/passwd");
+        assertUrlRejected("ftp://example.com/");
+        assertUrlRejected("not a url");
+    }
+
+    @Test
+    public void ssrfGuardAllowsPublicMapperUrls() throws Exception {
+        // Literal public IPs resolve without a DNS lookup, so this stays offline and deterministic.
+        invokeValidateUrl("http://8.8.8.8/");
+        invokeValidateUrl("https://1.1.1.1/some/path");
+    }
+
+    @Test
+    public void ssrfGuardPinsConnectUrlToResolvedIp() throws Exception {
+        // The returned connect URL must target the resolved IP (defeats DNS rebinding) while preserving the
+        // original host as the Host header, and keeping scheme/port/path/query intact.
+        Object safeUrl = invokeValidateUrl("http://8.8.8.8:81/some/path?q=1");
+        assertEquals("http://8.8.8.8:81/some/path?q=1", readField(safeUrl, "connectUrl"));
+        assertEquals("8.8.8.8:81", readField(safeUrl, "hostHeader"));
+    }
+
+    @Test
+    public void ssrfGuardAllowsSelfReferentialBaseUri() throws Exception {
+        // A mapper URL pointing back at the application's own base URI must be allowed even though it resolves to
+        // loopback/private, otherwise legitimate self-referential fetches break on localhost/internal deployments.
+        Field scopesField = TemplateMergeService.class.getDeclaredField("scopes");
+        scopesField.setAccessible(true);
+        Map<String, Object> scopes = new HashMap<>();
+        scopes.put("BASE_URI", "https://localhost:8443/fineract-provider/api/v1/");
+        scopesField.set(tms, scopes);
+
+        invokeValidateUrl("https://localhost:8443/fineract-provider/api/v1/runreports/x");
+        // A different loopback origin (not the base URI) must still be rejected.
+        assertUrlRejected("https://localhost:9999/other");
+    }
+
+    private void assertUrlRejected(String url) {
+        InvocationTargetException wrapper = assertThrows(InvocationTargetException.class, () -> invokeValidateUrl(url));
+        assertTrue(wrapper.getCause() instanceof IOException, "Expected IOException for URL: " + url);
+    }
+
+    private Object invokeValidateUrl(String url) throws Exception {
+        Method method = TemplateMergeService.class.getDeclaredMethod("validateAndPinUrl", String.class);
+        method.setAccessible(true);
+        return method.invoke(tms, url);
+    }
+
+    private String readField(Object obj, String fieldName) throws Exception {
+        Field f = obj.getClass().getDeclaredField(fieldName);
+        f.setAccessible(true);
+        return (String) f.get(obj);
     }
 
     protected String compileTemplateText(String templateText, Map<String, Object> scope) throws MalformedURLException, IOException {
