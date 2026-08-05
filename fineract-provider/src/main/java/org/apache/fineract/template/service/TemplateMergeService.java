@@ -29,8 +29,12 @@ import java.io.StringReader;
 import java.io.StringWriter;
 import java.net.Authenticator;
 import java.net.HttpURLConnection;
+import java.net.InetAddress;
 import java.net.PasswordAuthentication;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
+import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.security.KeyManagementException;
 import java.security.KeyStoreException;
@@ -101,6 +105,7 @@ public class TemplateMergeService {
 
     @SuppressWarnings("unchecked")
     private Map<String, Object> getMapFromUrl(final String url) throws IOException {
+        validateUrlForSsrf(url);
         final HttpURLConnection connection = getConnection(url);
 
         final String response = getStringFromInputStream(connection.getInputStream());
@@ -111,6 +116,69 @@ public class TemplateMergeService {
             result = new ObjectMapper().readValue(response, HashMap.class);
         }
         return result;
+    }
+
+    /**
+     * Guards the mapper URL fetch against Server-Side Request Forgery. Only http/https URLs are allowed, and every IP
+     * address the host resolves to must be a routable public address. Loopback, link-local (including the
+     * 169.254.169.254 cloud metadata endpoint), site-local/private, wildcard, multicast and unique-local addresses are
+     * rejected. DNS is resolved here and every resolved address is checked to reduce the DNS-rebinding window.
+     *
+     * @throws IOException
+     *             if the URL is malformed, uses a forbidden scheme, cannot be resolved, or resolves to a forbidden
+     *             address.
+     */
+    private void validateUrlForSsrf(final String url) throws IOException {
+        final URI uri;
+        try {
+            uri = new URI(url);
+        } catch (final URISyntaxException e) {
+            throw new IOException("Mapper URL is not a valid URI: " + url, e);
+        }
+
+        final String scheme = uri.getScheme();
+        if (scheme == null || !("http".equalsIgnoreCase(scheme) || "https".equalsIgnoreCase(scheme))) {
+            throw new IOException("Mapper URL scheme is not permitted (only http/https allowed): " + url);
+        }
+
+        final String host = uri.getHost();
+        if (host == null || host.isEmpty()) {
+            throw new IOException("Mapper URL has no host: " + url);
+        }
+
+        final InetAddress[] addresses;
+        try {
+            addresses = InetAddress.getAllByName(host);
+        } catch (final UnknownHostException e) {
+            throw new IOException("Mapper URL host could not be resolved: " + host, e);
+        }
+
+        for (final InetAddress address : addresses) {
+            if (isForbiddenAddress(address)) {
+                throw new IOException("Mapper URL resolves to a forbidden (private/loopback/link-local) address: " + host);
+            }
+        }
+    }
+
+    private boolean isForbiddenAddress(final InetAddress address) {
+        if (address.isLoopbackAddress() || address.isAnyLocalAddress() || address.isLinkLocalAddress() || address.isSiteLocalAddress()
+                || address.isMulticastAddress()) {
+            return true;
+        }
+        final byte[] bytes = address.getAddress();
+        // IPv4 100.64.0.0/10 (carrier-grade NAT / shared address space).
+        if (bytes.length == 4) {
+            final int first = bytes[0] & 0xFF;
+            final int second = bytes[1] & 0xFF;
+            if (first == 100 && second >= 64 && second <= 127) {
+                return true;
+            }
+        }
+        // IPv6 unique-local addresses fc00::/7 (not covered by isSiteLocalAddress).
+        if (bytes.length == 16 && (bytes[0] & 0xFE) == 0xFC) {
+            return true;
+        }
+        return false;
     }
 
     private HttpURLConnection getConnection(final String url) {
@@ -135,6 +203,8 @@ public class TemplateMergeService {
             }
             TrustModifier.relaxHostChecking(connection);
 
+            // Do not follow redirects: a redirect would bypass the SSRF destination checks.
+            connection.setInstanceFollowRedirects(false);
             connection.setDoInput(true);
 
         } catch (IOException | KeyManagementException | NoSuchAlgorithmException | KeyStoreException e) {

@@ -19,6 +19,8 @@
 package org.apache.fineract.template;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.google.common.io.Resources;
 import com.google.common.reflect.TypeToken;
@@ -28,6 +30,8 @@ import com.google.gson.JsonParser;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.math.RoundingMode;
 import java.net.MalformedURLException;
@@ -112,6 +116,39 @@ public class TemplateMergeServiceTest {
 
         String output = compileTemplateText(templateText, scopes);
         assertEquals(expectedOutput, output);
+    }
+
+    @Test
+    public void ssrfGuardRejectsForbiddenMapperUrls() throws Exception {
+        // Cloud metadata endpoint, loopback, private ranges and non-http schemes must be rejected.
+        assertUrlRejected("http://169.254.169.254/latest/meta-data/iam/security-credentials/");
+        assertUrlRejected("http://127.0.0.1/internal");
+        assertUrlRejected("http://localhost:8080/admin");
+        assertUrlRejected("http://10.0.0.1/");
+        assertUrlRejected("http://192.168.1.1/");
+        assertUrlRejected("http://172.16.0.1/");
+        assertUrlRejected("http://[::1]/");
+        assertUrlRejected("file:///etc/passwd");
+        assertUrlRejected("ftp://example.com/");
+        assertUrlRejected("not a url");
+    }
+
+    @Test
+    public void ssrfGuardAllowsPublicMapperUrls() throws Exception {
+        // Literal public IPs resolve without a DNS lookup, so this stays offline and deterministic.
+        invokeValidateUrl("http://8.8.8.8/");
+        invokeValidateUrl("https://1.1.1.1/some/path");
+    }
+
+    private void assertUrlRejected(String url) {
+        InvocationTargetException wrapper = assertThrows(InvocationTargetException.class, () -> invokeValidateUrl(url));
+        assertTrue(wrapper.getCause() instanceof IOException, "Expected IOException for URL: " + url);
+    }
+
+    private void invokeValidateUrl(String url) throws Exception {
+        Method method = TemplateMergeService.class.getDeclaredMethod("validateUrlForSsrf", String.class);
+        method.setAccessible(true);
+        method.invoke(tms, url);
     }
 
     protected String compileTemplateText(String templateText, Map<String, Object> scope) throws MalformedURLException, IOException {
