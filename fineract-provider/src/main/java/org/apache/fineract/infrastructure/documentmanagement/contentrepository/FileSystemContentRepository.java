@@ -44,7 +44,7 @@ public class FileSystemContentRepository implements ContentRepository {
 
     @Override
     public String saveFile(final InputStream uploadedInputStream, final DocumentCommand documentCommand) {
-        final String fileName = documentCommand.getFileName();
+        final String fileName = ContentRepositoryUtils.sanitizeFileName(documentCommand.getFileName());
         ContentRepositoryUtils.validateFileSizeWithinPermissibleRange(documentCommand.getSize(), fileName);
 
         final String fileLocation = generateFileParentDirectory(documentCommand.getParentEntityType(), documentCommand.getParentEntityId())
@@ -56,20 +56,21 @@ public class FileSystemContentRepository implements ContentRepository {
 
     @Override
     public String saveImage(final InputStream uploadedInputStream, final Long resourceId, final String imageName, final Long fileSize) {
-        ContentRepositoryUtils.validateFileSizeWithinPermissibleRange(fileSize, imageName);
-        final String fileLocation = generateClientImageParentDirectory(resourceId) + File.separator + imageName;
-        writeFileToFileSystem(imageName, uploadedInputStream, fileLocation);
+        final String fileName = ContentRepositoryUtils.sanitizeFileName(imageName);
+        ContentRepositoryUtils.validateFileSizeWithinPermissibleRange(fileSize, fileName);
+        final String fileLocation = generateClientImageParentDirectory(resourceId) + File.separator + fileName;
+        writeFileToFileSystem(fileName, uploadedInputStream, fileLocation);
         return fileLocation;
     }
 
     @Override
     public String saveImage(final Base64EncodedImage base64EncodedImage, final Long resourceId, final String imageName) {
-        final String fileLocation = generateClientImageParentDirectory(resourceId) + File.separator + imageName
-                + base64EncodedImage.getFileExtension();
+        final String fileName = ContentRepositoryUtils.sanitizeFileName(imageName + base64EncodedImage.getFileExtension());
+        final String fileLocation = generateClientImageParentDirectory(resourceId) + File.separator + fileName;
         String base64EncodedImageString = base64EncodedImage.getBase64EncodedString();
         try {
             final InputStream toUploadInputStream = new ByteArrayInputStream(Base64.getMimeDecoder().decode(base64EncodedImageString));
-            writeFileToFileSystem(imageName, toUploadInputStream, fileLocation);
+            writeFileToFileSystem(fileName, toUploadInputStream, fileLocation);
             return fileLocation;
         } catch (IllegalArgumentException iae) {
             LOG.error("IllegalArgumentException due to invalid Base64 encoding: {}", base64EncodedImageString, iae);
@@ -138,10 +139,23 @@ public class FileSystemContentRepository implements ContentRepository {
         Files.createParentDirs(new File(uploadDocumentLocation));
     }
 
+    /**
+     * Ensures that the resolved location of the file to be written stays within the content repository base directory.
+     */
+    private File resolveTargetFileWithinBaseDirectory(final String fileName, final String fileLocation) throws IOException {
+        final File targetFile = new File(fileLocation).getCanonicalFile();
+        final File baseDirectory = new File(FileSystemContentRepository.FINERACT_BASE_DIR).getCanonicalFile();
+        if (!targetFile.toPath().startsWith(baseDirectory.toPath())) {
+            throw new ContentManagementException(fileName, "the file location is outside of the content repository directory");
+        }
+        return targetFile;
+    }
+
     private void writeFileToFileSystem(final String fileName, final InputStream uploadedInputStream, final String fileLocation) {
         try {
-            makeDirectories(fileLocation);
-            FileUtils.copyInputStreamToFile(uploadedInputStream, new File(fileLocation));
+            final File targetFile = resolveTargetFileWithinBaseDirectory(fileName, fileLocation);
+            makeDirectories(targetFile.getPath());
+            FileUtils.copyInputStreamToFile(uploadedInputStream, targetFile);
         } catch (final IOException ioException) {
             LOG.warn("writeFileToFileSystem() IOException (logged because cause is not propagated in ContentManagementException)",
                     ioException);

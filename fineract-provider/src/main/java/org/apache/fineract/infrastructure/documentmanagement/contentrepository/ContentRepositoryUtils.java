@@ -21,6 +21,7 @@ package org.apache.fineract.infrastructure.documentmanagement.contentrepository;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.fineract.infrastructure.core.data.ApiParameterError;
 import org.apache.fineract.infrastructure.core.domain.Base64EncodedImage;
@@ -182,6 +183,22 @@ public final class ContentRepositoryUtils {
             throw new PlatformApiDataValidationException("validation.msg.validation.errors.exist", "Validation errors exist.",
                     dataValidationErrors);
         }
+    }
+
+    /**
+     * Strips any directory component from a client supplied file name so that it can safely be used as the last segment
+     * of a storage path.
+     *
+     * @param fileName
+     *            the untrusted file name
+     * @return the bare file name
+     */
+    public static String sanitizeFileName(final String fileName) {
+        final String name = FilenameUtils.getName(StringUtils.trimToEmpty(fileName));
+        if (StringUtils.isBlank(name) || ".".equals(name) || "..".equals(name) || name.indexOf('\u0000') >= 0) {
+            throw new ContentManagementException(String.valueOf(fileName), "the file name is not a valid file name");
+        }
+        return name;
     }
 
     /**
