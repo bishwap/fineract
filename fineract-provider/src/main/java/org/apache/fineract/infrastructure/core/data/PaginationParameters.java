@@ -18,7 +18,9 @@
  */
 package org.apache.fineract.infrastructure.core.data;
 
+import java.util.regex.Pattern;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.fineract.infrastructure.security.utils.SQLInjectionException;
 
 /**
  * <p>
@@ -26,6 +28,14 @@ import org.apache.commons.lang3.StringUtils;
  * </p>
  */
 public final class PaginationParameters {
+
+    /**
+     * A comma separated list of (optionally table qualified) column names, e.g. "id" or "g.display_name, o.name".
+     */
+    private static final Pattern ORDER_BY_PATTERN = Pattern
+            .compile("[a-zA-Z_][a-zA-Z0-9_]*(\\.[a-zA-Z_][a-zA-Z0-9_]*)?(\\s*,\\s*[a-zA-Z_][a-zA-Z0-9_]*(\\.[a-zA-Z_][a-zA-Z0-9_]*)?)*");
+
+    private static final Pattern SORT_ORDER_PATTERN = Pattern.compile("(?i)asc|desc");
 
     private final boolean paged;
     private final Integer offset;
@@ -107,8 +117,14 @@ public final class PaginationParameters {
         final StringBuilder sql = new StringBuilder();
 
         if (this.isOrderByRequested()) {
+            if (!ORDER_BY_PATTERN.matcher(this.getOrderBy()).matches()) {
+                throw new SQLInjectionException();
+            }
             sql.append(" order by ").append(this.getOrderBy());
             if (this.isSortOrderProvided()) {
+                if (!SORT_ORDER_PATTERN.matcher(this.getSortOrder()).matches()) {
+                    throw new SQLInjectionException();
+                }
                 sql.append(' ').append(this.getSortOrder());
             }
         }
