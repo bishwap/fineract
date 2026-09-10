@@ -89,7 +89,7 @@ final class SavingsAccountQueryParser {
             "total_penalty_charge_derived", "min_balance_for_interest_calculation", "min_required_balance", "enforce_min_required_balance",
             "on_hold_funds_derived", "withhold_tax", "total_withhold_tax_derived", "last_interest_calculation_date",
             "total_savings_amount_on_hold", "tax_group_id", "product_id", "client_id", "group_id", "field_officer_id", "submittedon_userid",
-            "rejectedon_userid", "withdrawnon_userid", "approvedon_userid", "activatedon_userid", "closedon_userid", "version_no"));
+            "rejectedon_userid", "withdrawnon_userid", "approvedon_userid", "activatedon_userid", "closedon_userid", "version"));
 
     private static final Set<String> CLIENT_COLUMNS = new HashSet<>(
             Arrays.asList("id", "account_no", "display_name", "external_id", "office_id", "status_enum", "firstname", "lastname",
@@ -368,8 +368,12 @@ final class SavingsAccountQueryParser {
      */
     private static final class Parser {
 
+        // Bound the recursion of parsePrimary so that deeply nested input cannot overflow the request thread's stack
+        private static final int MAX_NESTING_DEPTH = 64;
+
         private final List<Token> tokens;
         private int position;
+        private int nestingDepth;
 
         private Parser(final List<Token> tokens) {
             this.tokens = tokens;
@@ -413,13 +417,16 @@ final class SavingsAccountQueryParser {
         private void parsePrimary(final ParsedCriteria criteria) {
             if (peek().type == TokenType.NOT) {
                 next();
+                enterNestedExpression();
                 criteria.sql.append("not (");
                 parsePrimary(criteria);
                 criteria.sql.append(')');
+                nestingDepth--;
                 return;
             }
             if (peek().type == TokenType.LEFT_PAREN) {
                 next();
+                enterNestedExpression();
                 criteria.sql.append('(');
                 parseOr(criteria);
                 if (peek().type != TokenType.RIGHT_PAREN) {
@@ -427,9 +434,17 @@ final class SavingsAccountQueryParser {
                 }
                 next();
                 criteria.sql.append(')');
+                nestingDepth--;
                 return;
             }
             parsePredicate(criteria);
+        }
+
+        private void enterNestedExpression() {
+            nestingDepth++;
+            if (nestingDepth > MAX_NESTING_DEPTH) {
+                throw new SQLInjectionException();
+            }
         }
 
         private void parsePredicate(final ParsedCriteria criteria) {

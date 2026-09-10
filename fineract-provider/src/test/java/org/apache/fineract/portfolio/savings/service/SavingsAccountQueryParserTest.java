@@ -80,6 +80,22 @@ public class SavingsAccountQueryParserTest {
         assertThrows(SQLInjectionException.class, () -> SavingsAccountQueryParser.parseOrderBy("(select sleep(10))"));
         assertThrows(SQLInjectionException.class, () -> SavingsAccountQueryParser.parseOrderBy("unknown_column"));
         assertThrows(SQLInjectionException.class, () -> SavingsAccountQueryParser.parseOrderBy("sa.password"));
+        assertEquals("sa.version", SavingsAccountQueryParser.parseOrderBy("sa.version"));
+        assertEquals("sa.version", SavingsAccountQueryParser.parseOrderBy("version"));
+        assertThrows(SQLInjectionException.class, () -> SavingsAccountQueryParser.parseOrderBy("version_no"));
+    }
+
+    @Test
+    public void testRejectsDeeplyNestedInput() {
+        final StringBuilder nested = new StringBuilder();
+        for (int i = 0; i < 100; i++) {
+            nested.append('(');
+        }
+        nested.append("sa.id = 1");
+        for (int i = 0; i < 100; i++) {
+            nested.append(')');
+        }
+        assertThrows(SQLInjectionException.class, () -> SavingsAccountQueryParser.parseSearch(nested.toString()));
     }
 
     @Test
