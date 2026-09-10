@@ -47,11 +47,13 @@ public final class XBRLMappingExpressionEvaluator {
 
     private final String expression;
     private final Map<String, BigDecimal> balances;
+    private final boolean syntaxOnly;
     private int pos;
 
-    private XBRLMappingExpressionEvaluator(final String expression, final Map<String, BigDecimal> balances) {
+    private XBRLMappingExpressionEvaluator(final String expression, final Map<String, BigDecimal> balances, final boolean syntaxOnly) {
         this.expression = expression;
         this.balances = balances;
+        this.syntaxOnly = syntaxOnly;
     }
 
     /**
@@ -59,23 +61,28 @@ public final class XBRLMappingExpressionEvaluator {
      * codes evaluate to zero).
      */
     public static BigDecimal evaluate(final String expression, final Map<String, BigDecimal> balances) {
+        return parse(expression, balances, false);
+    }
+
+    /**
+     * Validates that the expression is syntactically well formed. Placeholders are not resolved, so balance-dependent
+     * conditions such as division by a zero balance are only enforced at evaluation time.
+     */
+    public static void validate(final String expression) {
+        parse(expression, Map.of(), true);
+    }
+
+    private static BigDecimal parse(final String expression, final Map<String, BigDecimal> balances, final boolean syntaxOnly) {
         if (expression == null) {
             throw new IllegalArgumentException("Mapping expression must not be null");
         }
-        final XBRLMappingExpressionEvaluator evaluator = new XBRLMappingExpressionEvaluator(expression, balances);
+        final XBRLMappingExpressionEvaluator evaluator = new XBRLMappingExpressionEvaluator(expression, balances, syntaxOnly);
         final BigDecimal result = evaluator.parseExpression();
         evaluator.skipWhitespace();
         if (evaluator.pos != expression.length()) {
             throw evaluator.error("Unexpected character");
         }
         return result;
-    }
-
-    /**
-     * Validates that the expression is syntactically well formed without needing any balances.
-     */
-    public static void validate(final String expression) {
-        evaluate(expression, Map.of());
     }
 
     public static List<String> extractGLCodes(final String expression) {
@@ -112,6 +119,9 @@ public final class XBRLMappingExpressionEvaluator {
             } else if (consume('/')) {
                 final BigDecimal divisor = parseFactor();
                 if (divisor.signum() == 0) {
+                    if (this.syntaxOnly) {
+                        continue;
+                    }
                     throw error("Division by zero");
                 }
                 value = value.divide(divisor, MATH_CONTEXT);

@@ -19,6 +19,7 @@
 package org.apache.fineract.mix.service;
 
 import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import java.math.BigDecimal;
 import java.sql.Date;
 import java.util.ArrayList;
@@ -64,7 +65,6 @@ public class XBRLResultServiceImpl implements XBRLResultService {
         return new XBRLData(config, startDate, endDate, currency);
     }
 
-    @SuppressWarnings("unchecked")
     private HashMap<MixTaxonomyData, BigDecimal> retrieveTaxonomyConfig(final Date startDate, final Date endDate) {
         final MixTaxonomyMappingData taxonomyMapping = this.readTaxonomyMappingService.retrieveTaxonomyMapping();
         if (taxonomyMapping == null) {
@@ -73,8 +73,7 @@ public class XBRLResultServiceImpl implements XBRLResultService {
         final String config = taxonomyMapping.getConfig();
         if (config != null) {
             // <taxonomyId, mapping>
-            HashMap<String, String> configMap = new HashMap<>();
-            configMap = new Gson().fromJson(config, configMap.getClass());
+            final Map<String, String> configMap = new Gson().fromJson(config, new TypeToken<Map<String, String>>() {}.getType());
             if (configMap == null) {
                 return null;
             }

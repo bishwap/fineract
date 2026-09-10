@@ -45,7 +45,14 @@ public class XBRLMappingExpressionEvaluatorTest {
         assertThrows(IllegalArgumentException.class, () -> XBRLMappingExpressionEvaluator.validate("{12300}; print(1)"));
         assertThrows(IllegalArgumentException.class, () -> XBRLMappingExpressionEvaluator.validate("{12300} + x"));
         assertThrows(IllegalArgumentException.class, () -> XBRLMappingExpressionEvaluator.validate("(1 + 2"));
-        assertThrows(IllegalArgumentException.class, () -> XBRLMappingExpressionEvaluator.validate("1 / 0"));
         assertThrows(IllegalArgumentException.class, () -> XBRLMappingExpressionEvaluator.validate(""));
+    }
+
+    @Test
+    public void shouldOnlyEnforceDivisionByZeroAtEvaluationTime() {
+        XBRLMappingExpressionEvaluator.validate("{12300} / {99999}");
+        assertEquals(0, new BigDecimal("-5.025").compareTo(XBRLMappingExpressionEvaluator.evaluate("{12300} / {11100}", BALANCES)));
+        assertThrows(IllegalArgumentException.class, () -> XBRLMappingExpressionEvaluator.evaluate("{12300} / {99999}", BALANCES));
+        assertThrows(IllegalArgumentException.class, () -> XBRLMappingExpressionEvaluator.evaluate("1 / 0", BALANCES));
     }
 }
