@@ -35,6 +35,7 @@ import org.apache.fineract.infrastructure.core.data.CommandProcessingResultBuild
 import org.apache.fineract.infrastructure.core.exception.PlatformApiDataValidationException;
 import org.apache.fineract.infrastructure.core.exception.PlatformDataIntegrityException;
 import org.apache.fineract.infrastructure.core.service.PlatformEmailSendException;
+import org.apache.fineract.infrastructure.security.exception.NoAuthorizationException;
 import org.apache.fineract.infrastructure.security.service.PlatformPasswordEncoder;
 import org.apache.fineract.infrastructure.security.service.PlatformSecurityContext;
 import org.apache.fineract.notification.service.TopicDomainService;
@@ -73,6 +74,8 @@ import org.springframework.util.ObjectUtils;
 public class AppUserWritePlatformServiceJpaRepositoryImpl implements AppUserWritePlatformService {
 
     private static final Logger LOG = LoggerFactory.getLogger(AppUserWritePlatformServiceJpaRepositoryImpl.class);
+    private static final List<String> SELF_UPDATE_PRIVILEGED_PARAMETERS = List.of("roles", "officeId", "staffId",
+            AppUserConstants.IS_SELF_SERVICE_USER, AppUserConstants.CLIENTS, AppUserConstants.PASSWORD_NEVER_EXPIRES);
 
     private final PlatformSecurityContext context;
     private final UserDomainService userDomainService;
@@ -183,9 +186,11 @@ public class AppUserWritePlatformServiceJpaRepositoryImpl implements AppUserWrit
     @Caching(evict = { @CacheEvict(value = "users", allEntries = true), @CacheEvict(value = "usersByUsername", allEntries = true) })
     public CommandProcessingResult updateUser(final Long userId, final JsonCommand command) {
         try {
-            this.context.authenticatedUser(new CommandWrapperBuilder().updateUser(null).build());
+            final AppUser currentUser = this.context.authenticatedUser(new CommandWrapperBuilder().updateUser(null).build());
 
             this.fromApiJsonDeserializer.validateForUpdate(command.json());
+
+            validateSelfUpdateIsRestrictedToNonPrivilegedFields(currentUser, userId, command);
 
             final AppUser userToUpdate = this.appUserRepository.findById(userId).orElseThrow(() -> new UserNotFoundException(userId));
 
@@ -277,6 +282,19 @@ public class AppUserWritePlatformServiceJpaRepositoryImpl implements AppUserWrit
         }
 
         return currentPasswordToSaveAsPreview;
+    }
+
+    private void validateSelfUpdateIsRestrictedToNonPrivilegedFields(final AppUser currentUser, final Long userId,
+            final JsonCommand command) {
+        if (!currentUser.getId().equals(userId) || !currentUser.hasNotPermissionForAnyOf("ALL_FUNCTIONS", "UPDATE_USER")) {
+            return;
+        }
+        for (final String parameter : SELF_UPDATE_PRIVILEGED_PARAMETERS) {
+            if (command.hasParameter(parameter)) {
+                throw new NoAuthorizationException("User " + currentUser.getUsername() + " is not authorised to modify own " + parameter
+                        + " without UPDATE_USER permission");
+            }
+        }
     }
 
     private Set<Role> assembleSetOfRoles(final String[] rolesArray) {
