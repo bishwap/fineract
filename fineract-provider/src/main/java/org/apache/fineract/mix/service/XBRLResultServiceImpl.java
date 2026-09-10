@@ -24,11 +24,6 @@ import java.sql.Date;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import javax.script.ScriptEngine;
-import javax.script.ScriptEngineManager;
-import javax.script.ScriptException;
 import org.apache.fineract.infrastructure.core.service.RoutingDataSource;
 import org.apache.fineract.mix.data.MixTaxonomyData;
 import org.apache.fineract.mix.data.MixTaxonomyMappingData;
@@ -45,7 +40,6 @@ import org.springframework.stereotype.Component;
 public class XBRLResultServiceImpl implements XBRLResultService {
 
     private static final Logger LOG = LoggerFactory.getLogger(XBRLResultServiceImpl.class);
-    private static final ScriptEngine SCRIPT_ENGINE = new ScriptEngineManager().getEngineByName("JavaScript");
 
     private final MixTaxonomyMappingReadPlatformService readTaxonomyMappingService;
     private final MixTaxonomyReadPlatformService readTaxonomyService;
@@ -149,45 +143,16 @@ public class XBRLResultServiceImpl implements XBRLResultService {
     }
 
     // Calculate Taxonomy value from expression
-    private BigDecimal processMappingString(String mappingString) {
-        final ArrayList<String> glCodes = getGLCodes(mappingString);
-        for (final String glcode : glCodes) {
-
-            final BigDecimal balance = this.accountBalanceMap.get(glcode);
-            mappingString = mappingString.replaceAll("\\{" + glcode + "\\}", balance != null ? balance.toString() : "0");
-        }
-
-        // evaluate the expression
-        Float eval = 0f;
+    private BigDecimal processMappingString(final String mappingString) {
         try {
-            final Number value = (Number) SCRIPT_ENGINE.eval(mappingString);
-            if (value != null) {
-                eval = value.floatValue();
-            }
-        } catch (final ScriptException e) {
+            return XBRLMappingExpressionEvaluator.evaluate(mappingString, this.accountBalanceMap);
+        } catch (final IllegalArgumentException | ArithmeticException e) {
             LOG.error("Problem occurred in processMappingString function", e);
-            throw new IllegalArgumentException(e.getMessage(), e);
+            throw new XBRLMappingInvalidException(e.getMessage());
         }
-
-        return new BigDecimal(eval);
     }
 
     public ArrayList<String> getGLCodes(final String template) {
-
-        final ArrayList<String> placeholders = new ArrayList<>();
-
-        if (template != null) {
-
-            final Pattern p = Pattern.compile("\\{(.*?)\\}");
-            final Matcher m = p.matcher(template);
-
-            while (m.find()) { // find next match
-                final String match = m.group();
-                final String code = match.substring(1, match.length() - 1);
-                placeholders.add(code);
-            }
-
-        }
-        return placeholders;
+        return new ArrayList<>(XBRLMappingExpressionEvaluator.extractGLCodes(template));
     }
 }

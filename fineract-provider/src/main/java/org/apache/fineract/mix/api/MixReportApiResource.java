@@ -25,6 +25,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
+import org.apache.fineract.infrastructure.security.service.PlatformSecurityContext;
 import org.apache.fineract.mix.data.XBRLData;
 import org.apache.fineract.mix.service.XBRLBuilder;
 import org.apache.fineract.mix.service.XBRLResultService;
@@ -39,11 +40,16 @@ import org.springframework.stereotype.Component;
 @Tag(name = "Mix Report", description = "")
 public class MixReportApiResource {
 
+    private static final String RESOURCE_NAME_FOR_PERMISSIONS = "XBRLREPORT";
+
+    private final PlatformSecurityContext context;
     private final XBRLResultService xbrlResultService;
     private final XBRLBuilder xbrlBuilder;
 
     @Autowired
-    public MixReportApiResource(final XBRLResultService xbrlResultService, final XBRLBuilder xbrlBuilder) {
+    public MixReportApiResource(final PlatformSecurityContext context, final XBRLResultService xbrlResultService,
+            final XBRLBuilder xbrlBuilder) {
+        this.context = context;
         this.xbrlResultService = xbrlResultService;
         this.xbrlBuilder = xbrlBuilder;
     }
@@ -52,6 +58,7 @@ public class MixReportApiResource {
     @Produces({ MediaType.APPLICATION_XML })
     public String retrieveXBRLReport(@QueryParam("startDate") final Date startDate, @QueryParam("endDate") final Date endDate,
             @QueryParam("currency") final String currency) {
+        this.context.authenticatedUser().validateHasReadPermission(RESOURCE_NAME_FOR_PERMISSIONS);
 
         final XBRLData data = this.xbrlResultService.getXBRLResult(startDate, endDate, currency);
 
